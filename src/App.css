@@ -1,0 +1,208 @@
+@import "tailwindcss";
+
+/* APP ROOT */
+
+#root{
+
+  width:100%;
+
+  min-height:100vh;
+
+  overflow:hidden;
+
+}
+
+/* GLOBAL SECTION SPACING */
+
+.section-padding{
+
+  padding-top:120px;
+
+  padding-bottom:120px;
+
+}
+
+/* GLOBAL TRANSITIONS */
+
+*{
+
+  transition:
+  background-color .3s ease,
+  color .3s ease,
+  border-color .3s ease,
+  transform .3s ease,
+  box-shadow .3s ease;
+
+}
+
+/* IMAGE SETTINGS */
+
+img{
+
+  user-select:none;
+
+  -webkit-user-drag:none;
+
+}
+
+/* CUSTOM GRADIENT TEXT */
+
+.text-gradient{
+
+  background:
+  linear-gradient(
+    90deg,
+    #5a3d8c,
+    #149ca7,
+    #f7b722
+  );
+
+  -webkit-background-clip:text;
+
+  -webkit-text-fill-color:transparent;
+
+}
+
+/* GLASS EFFECT */
+
+.glass-effect{
+
+  background:
+  rgba(255,255,255,0.7);
+
+  backdrop-filter:blur(14px);
+
+  -webkit-backdrop-filter:blur(14px);
+
+}
+
+/* SOFT SHADOW */
+
+.soft-shadow{
+
+  box-shadow:
+  0 15px 40px rgba(0,0,0,0.08);
+
+}
+
+/* HOVER EFFECT */
+
+.hover-lift:hover{
+
+  transform:
+  translateY(-8px);
+
+}
+
+/* PRETTY SCROLLBAR */
+
+::-webkit-scrollbar{
+  width:10px;
+}
+
+::-webkit-scrollbar-track{
+  background:#f7f2fb;
+}
+
+::-webkit-scrollbar-thumb{
+
+  background:
+  linear-gradient(
+    to bottom,
+    #5a3d8c,
+    #149ca7,
+    #f7b722
+  );
+
+  border-radius:20px;
+
+}
+
+::-webkit-scrollbar-thumb:hover{
+
+  background:
+  linear-gradient(
+    to bottom,
+    #4b3278,
+    #d94350,
+    #e6a20f
+  );
+
+}
+
+/* TEXT SELECTION */
+
+::selection{
+
+  background:#5a3d8c;
+
+  color:white;
+
+}
+
+/* ANIMATION */
+
+.float-animation{
+
+  animation:
+  floating 3s ease-in-out infinite;
+
+}
+
+@keyframes floating{
+
+  0%{
+    transform:translateY(0px);
+  }
+
+  50%{
+    transform:translateY(-10px);
+  }
+
+  100%{
+    transform:translateY(0px);
+  }
+
+}
+
+/* TABLET */
+
+@media(max-width:1024px){
+
+  .section-padding{
+
+    padding-top:90px;
+
+    padding-bottom:90px;
+
+  }
+
+}
+
+/* MOBILE */
+
+@media(max-width:768px){
+
+  .section-padding{
+
+    padding-top:70px;
+
+    padding-bottom:70px;
+
+  }
+
+}
+
+/* SMALL MOBILE */
+
+@media(max-width:480px){
+
+  .section-padding{
+
+    padding-top:60px;
+
+    padding-bottom:60px;
+
+  }
+
+}
