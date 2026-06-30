@@ -11,11 +11,9 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import WhatsAppButton from "../components/WhatsAppButton";
 import { blogAPI } from "../utils/api";
-import blog1 from "../assets/blog/blog1.png";
-import blog2 from "../assets/blog/blog2.png";
-import blog3 from "../assets/blog/blog3.png";
 
-const fallbackImages = [blog1, blog2, blog3];
+
+const fallbackImages = [];
 
 const formatDate = (value) => {
   if (!value) return "Recently";
