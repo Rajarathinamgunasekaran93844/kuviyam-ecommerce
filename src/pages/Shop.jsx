@@ -1,5 +1,6 @@
 import {
   useState,
+  useEffect,
 } from "react";
 
 import {
@@ -13,26 +14,32 @@ import {
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import ProductCard from "../components/ProductCard";
+import ProductSkeleton from "../components/ProductSkeleton";
 
-import products from "../data/products";
+import { productAPI } from "../utils/api";
 
 const Shop = () => {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
 
-  const [search, setSearch] =
-    useState("");
+  // Fetch products
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await productAPI.getProducts({ search });
+        setProducts(response.data.products || response.data.data || []);
+      } catch (error) {
+        console.error("Failed to fetch products:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  /* FILTER PRODUCTS */
+    fetchProducts();
+  }, [search]);
 
-  const filteredProducts =
-    products.filter((product) =>
-
-      product.title
-        .toLowerCase()
-        .includes(
-          search.toLowerCase()
-        )
-
-    );
+  const filteredProducts = products;
 
   return (
 
@@ -248,9 +255,18 @@ const Shop = () => {
 
           </div>
 
-          {/* EMPTY STATE */}
-
-          {filteredProducts.length === 0 ? (
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 lg:gap-10">
+              {Array.from({ length: 3 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="w-full max-w-[460px] mx-auto"
+                >
+                  <ProductSkeleton />
+                </div>
+              ))}
+            </div>
+          ) : filteredProducts.length === 0 ? (
 
             <div className="bg-white/90 backdrop-blur-md rounded-[24px] shadow-2xl p-8 md:p-12 text-center border-4 border-white max-w-4xl mx-auto">
 

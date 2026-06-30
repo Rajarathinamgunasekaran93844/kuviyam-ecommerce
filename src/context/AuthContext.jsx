@@ -1,137 +1,64 @@
 import {
-  createContext,
   useState,
   useEffect,
 } from "react";
-
-/* ====================================== */
-/* CREATE CONTEXT */
-/* ====================================== */
-
-export const AuthContext =
-  createContext();
+import { authAPI } from "../utils/api";
+import { AuthContext } from "./authContextValue";
 
 /* ====================================== */
 /* PROVIDER */
 /* ====================================== */
 
-export const AuthProvider = ({
-  children,
-}) => {
+export const AuthProvider = ({ children }) => {
   /* USER STATE */
-
-  const [user, setUser] =
-    useState(null);
+  const [user, setUser] = useState(null);
 
   /* LOADING STATE */
-
-  const [loading, setLoading] =
-    useState(true);
+  const [loading, setLoading] = useState(true);
 
   /* ====================================== */
-  /* LOAD USER FROM LOCAL STORAGE */
+  /* LOAD USER FROM LOCAL STORAGE & VERIFY */
   /* ====================================== */
 
   useEffect(() => {
-    const savedUser =
-      localStorage.getItem(
-        "kuviyamLoggedUser"
-      );
+    const loadUser = async () => {
+      const token = localStorage.getItem("kuviyamToken");
+      if (token) {
+        try {
+          const response = await authAPI.getMe();
+          setUser(response.data.user);
+        } catch {
+          localStorage.removeItem("kuviyamToken");
+        }
+      }
+      setLoading(false);
+    };
 
-    if (savedUser) {
-      setUser(
-        JSON.parse(savedUser)
-      );
-    }
-
-    setLoading(false);
+    loadUser();
   }, []);
 
   /* ====================================== */
   /* REGISTER USER */
   /* ====================================== */
 
-  const register = (
-    userData
-  ) => {
-    /* SAVE REGISTERED USER */
-
-    localStorage.setItem(
-      "kuviyamUser",
-
-      JSON.stringify(userData)
-    );
-
-    /* AUTO LOGIN */
-
-    localStorage.setItem(
-      "kuviyamLoggedUser",
-
-      JSON.stringify(userData)
-    );
-
-    setUser(userData);
+  const register = async (userData) => {
+    const response = await authAPI.register(userData);
+    const { user, token } = response.data;
+    localStorage.setItem("kuviyamToken", token);
+    setUser(user);
+    return response.data;
   };
 
   /* ====================================== */
   /* LOGIN USER */
   /* ====================================== */
 
-  const login = (
-    loginData
-  ) => {
-    const savedUser =
-      JSON.parse(
-        localStorage.getItem(
-          "kuviyamUser"
-        )
-      );
-
-    /* USER NOT FOUND */
-
-    if (!savedUser) {
-      return {
-        success: false,
-
-        message:
-          "No account found. Please register first.",
-      };
-    }
-
-    /* VALIDATE */
-
-    if (
-      savedUser.email ===
-        loginData.email &&
-      savedUser.password ===
-        loginData.password
-    ) {
-      /* SAVE LOGGED USER */
-
-      localStorage.setItem(
-        "kuviyamLoggedUser",
-
-        JSON.stringify(savedUser)
-      );
-
-      setUser(savedUser);
-
-      return {
-        success: true,
-
-        message:
-          "Login successful",
-      };
-    }
-
-    /* INVALID */
-
-    return {
-      success: false,
-
-      message:
-        "Invalid email or password.",
-    };
+  const login = async (loginData) => {
+    const response = await authAPI.login(loginData);
+    const { user, token } = response.data;
+    localStorage.setItem("kuviyamToken", token);
+    setUser(user);
+    return response.data;
   };
 
   /* ====================================== */
@@ -139,10 +66,7 @@ export const AuthProvider = ({
   /* ====================================== */
 
   const logout = () => {
-    localStorage.removeItem(
-      "kuviyamLoggedUser"
-    );
-
+    localStorage.removeItem("kuviyamToken");
     setUser(null);
   };
 
@@ -150,26 +74,10 @@ export const AuthProvider = ({
   /* UPDATE PROFILE */
   /* ====================================== */
 
-  const updateProfile = (
-    updatedUser
-  ) => {
-    /* UPDATE MAIN USER */
-
-    localStorage.setItem(
-      "kuviyamUser",
-
-      JSON.stringify(updatedUser)
-    );
-
-    /* UPDATE LOGGED USER */
-
-    localStorage.setItem(
-      "kuviyamLoggedUser",
-
-      JSON.stringify(updatedUser)
-    );
-
-    setUser(updatedUser);
+  const updateProfile = async (updatedData) => {
+    const response = await authAPI.updateProfile(updatedData);
+    setUser(response.data.user);
+    return response.data;
   };
 
   /* ====================================== */
@@ -178,19 +86,12 @@ export const AuthProvider = ({
 
   const value = {
     user,
-
     loading,
-
     register,
-
     login,
-
     logout,
-
     updateProfile,
-
-    isAuthenticated:
-      !!user,
+    isAuthenticated: !!user,
   };
 
   /* ====================================== */
@@ -198,9 +99,7 @@ export const AuthProvider = ({
   /* ====================================== */
 
   return (
-    <AuthContext.Provider
-      value={value}
-    >
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

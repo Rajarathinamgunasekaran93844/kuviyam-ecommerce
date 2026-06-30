@@ -1,6 +1,10 @@
 import { Link } from "react-router-dom";
 
 import {
+  useContext,
+} from "react";
+
+import {
   Star,
   ShoppingCart,
   Sparkles,
@@ -9,9 +13,112 @@ import {
   Eye,
 } from "lucide-react";
 
+import {
+  toast,
+} from "react-toastify";
+
+import { CartContext } from "../context/cartContextValue";
+
+import {
+  AuthContext,
+} from "../context/authContextValue";
+
+import { wishlistAPI } from "../utils/api";
+
 const ProductCard = ({
   product,
 }) => {
+  const { addToCart } =
+    useContext(CartContext);
+
+  const {
+    isAuthenticated,
+  } = useContext(AuthContext);
+
+  /* ====================================== */
+  /* HANDLE ADD TO CART */
+  /* ====================================== */
+
+  const handleAddToCart =
+    () => {
+      /* LOGIN CHECK */
+
+      if (
+        !isAuthenticated
+      ) {
+        toast.error(
+          "🔐 Please login to continue",
+          {
+            position:
+              "top-right",
+
+            autoClose: 2200,
+
+            theme:
+              "colored",
+          }
+        );
+
+        return;
+      }
+
+      /* ADD PRODUCT */
+
+      addToCart(product);
+
+      toast.success(
+        `${product.title} added to cart 🛒`,
+        {
+          position:
+            "top-right",
+
+          autoClose: 2500,
+
+          theme:
+            "colored",
+        }
+      );
+    };
+
+  /* ====================================== */
+  /* HANDLE WISHLIST */
+  /* ====================================== */
+
+  const handleWishlist = async () => {
+    if (!isAuthenticated) {
+      toast.error(
+        "🔐 Login required for wishlist",
+        {
+          position: "top-right",
+          autoClose: 2200,
+          theme: "colored",
+        }
+      );
+      return;
+    }
+
+    try {
+      await wishlistAPI.addToWishlist(product.id);
+      toast.success(
+        `${product.title} added to wishlist ❤️`,
+        {
+          position: "top-right",
+          autoClose: 2500,
+          theme: "colored",
+        }
+      );
+    } catch {
+      toast.error(
+        "Failed to add to wishlist",
+        {
+          position: "top-right",
+          autoClose: 2200,
+          theme: "colored",
+        }
+      );
+    }
+  };
+
   return (
     <div
       className="
@@ -213,6 +320,9 @@ const ProductCard = ({
         {/* FAVORITE */}
 
         <button
+          onClick={
+            handleWishlist
+          }
           className="
             absolute
             top-5 right-5
@@ -249,21 +359,15 @@ const ProductCard = ({
         {/* IMAGE */}
 
         <img
-          src={
-            product?.images?.[0]
-          }
-          alt={product.title}
+          src={product?.images?.[0] || "/Paachcharam_book.png"}
+          alt={product?.title}
           className="
             h-[260px]
             sm:h-[300px]
             md:h-[340px]
-
             w-full
-
             object-cover
-
             group-hover:scale-105
-
             transition duration-700
           "
         />
@@ -567,29 +671,83 @@ const ProductCard = ({
             </div>
           </div>
 
-          {/* BUTTON */}
+          {/* BUTTONS */}
 
-          <Link
-            to={`/product/${product.id}`}
-            className="w-full"
-          >
+          <div className="flex flex-col gap-4">
+            {/* VIEW DETAILS */}
+
+            <Link
+              to={`/product/${product.id}`}
+              className="w-full"
+            >
+              <button
+                className="
+                  group/button
+
+                  w-full
+
+                  bg-gradient-to-r
+                  from-brand-purple-500
+                  via-brand-red-500
+                  to-brand-gold-400
+
+                  hover:from-brand-purple-600
+                  hover:to-brand-gold-500
+
+                  text-white
+
+                  py-5
+
+                  rounded-2xl
+
+                  font-black
+
+                  text-lg
+
+                  shadow-2xl
+
+                  transition duration-300
+
+                  hover:scale-[1.02]
+
+                  flex items-center justify-center gap-3
+                "
+              >
+                <Eye
+                  size={22}
+                />
+
+                View Details
+
+                <span
+                  className="
+                    group-hover/button:translate-x-1
+
+                    transition duration-300
+                  "
+                >
+                  →
+                </span>
+              </button>
+            </Link>
+
+            {/* ADD TO CART */}
+
             <button
+              onClick={
+                handleAddToCart
+              }
               className="
-                group/button
-
                 w-full
 
-                bg-gradient-to-r
-                from-brand-purple-500
-                via-brand-red-500
-                to-brand-gold-400
+                bg-white
 
-                hover:from-brand-purple-600
-                hover:to-brand-gold-500
+                border-2
+                border-brand-purple-400
 
-                text-white
+                text-brand-purple-600
 
-                py-5
+                py-4
 
                 rounded-2xl
 
@@ -597,11 +755,12 @@ const ProductCard = ({
 
                 text-lg
 
-                shadow-2xl
+                shadow-lg
+
+                hover:bg-brand-purple-500
+                hover:text-white
 
                 transition duration-300
-
-                hover:scale-[1.02]
 
                 flex items-center justify-center gap-3
               "
@@ -610,19 +769,9 @@ const ProductCard = ({
                 size={22}
               />
 
-              View Details
-
-              <span
-                className="
-                  group-hover/button:translate-x-1
-
-                  transition duration-300
-                "
-              >
-                →
-              </span>
+              Add To Cart
             </button>
-          </Link>
+          </div>
         </div>
       </div>
     </div>

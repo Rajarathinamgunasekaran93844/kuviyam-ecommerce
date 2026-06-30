@@ -10,23 +10,28 @@ import {
 
 import { Link } from "react-router-dom";
 
-import products from "../data/products";
-
+import { productAPI } from "../utils/api";
 import ProductCard from "./ProductCard";
 import ProductSkeleton from "./ProductSkeleton";
 import Reveal from "./Reveal";
 
 const FeaturedBooks = () => {
-  const [loading, setLoading] =
-    useState(true);
+  const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState([]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1000);
+    const fetchProducts = async () => {
+      try {
+        const response = await productAPI.getProducts();
+        setProducts(response.data.products || response.data.data || []);
+      } catch (error) {
+        console.error("Failed to fetch products:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    return () =>
-      clearTimeout(timer);
+    fetchProducts();
   }, []);
 
   return (

@@ -1,15 +1,32 @@
+import { useState } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-
-import {
-  Mail,
-  Phone,
-  MapPin,
-  Send,
-  Sparkles,
-} from "lucide-react";
+import { Mail, Phone, MapPin, Send, Sparkles } from "lucide-react";
+import { toast } from "react-toastify";
+import { contactAPI } from "../utils/api";
 
 const Contact = () => {
+  const [formData, setFormData] = useState({ name: "", email: "", message: "" });
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      await contactAPI.sendMessage(formData);
+      toast.success("Message sent successfully! ✨");
+      setFormData({ name: "", email: "", message: "" });
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to send message");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
 
@@ -209,7 +226,7 @@ const Contact = () => {
 
                       <p className="text-gray-700 mt-2 text-base md:text-lg leading-8">
 
-                        Tamil Nadu, India
+                        Tiruchirappalli, Tamil Nadu, India
 
                       </p>
 
@@ -241,7 +258,7 @@ const Contact = () => {
 
                 </h2>
 
-                <form className="space-y-6">
+                <form onSubmit={handleSubmit} className="space-y-6">
 
                   {/* NAME */}
 
@@ -255,7 +272,11 @@ const Contact = () => {
 
                     <input
                       type="text"
+                      name="name"
                       placeholder="Enter your name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      required
                       className="w-full bg-brand-purple-50 border-2 border-transparent rounded-2xl px-5 py-4 text-base md:text-lg outline-none focus:border-brand-purple-400 transition duration-300"
                     />
 
@@ -273,7 +294,11 @@ const Contact = () => {
 
                     <input
                       type="email"
+                      name="email"
                       placeholder="Enter your email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      required
                       className="w-full bg-brand-gold-50 border-2 border-transparent rounded-2xl px-5 py-4 text-base md:text-lg outline-none focus:border-brand-gold-400 transition duration-300"
                     />
 
@@ -290,8 +315,12 @@ const Contact = () => {
                     </label>
 
                     <textarea
+                      name="message"
                       rows="6"
                       placeholder="Write your message"
+                      value={formData.message}
+                      onChange={handleChange}
+                      required
                       className="w-full bg-brand-teal-50 border-2 border-transparent rounded-2xl px-5 py-4 text-base md:text-lg outline-none focus:border-brand-teal-400 transition duration-300 resize-none"
                     ></textarea>
 
@@ -301,6 +330,7 @@ const Contact = () => {
 
                   <button
                     type="submit"
+                    disabled={loading}
                     className="group bg-gradient-to-r from-brand-purple-500 to-brand-gold-400 hover:from-brand-purple-600 hover:to-brand-gold-500 text-white px-8 py-4 rounded-full font-black flex items-center gap-3 transition duration-300 text-lg shadow-2xl hover:scale-105"
                   >
 

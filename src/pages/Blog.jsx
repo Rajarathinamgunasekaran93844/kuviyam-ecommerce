@@ -1,525 +1,246 @@
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import {
-  motion,
-} from "framer-motion";
-
-import {
-  CalendarDays,
   ArrowRight,
+  BookOpen,
+  CalendarDays,
+  RefreshCw,
   User,
 } from "lucide-react";
-
 import Navbar from "../components/Navbar";
-
 import Footer from "../components/Footer";
-
 import WhatsAppButton from "../components/WhatsAppButton";
-
-/* BLOG IMAGES */
-
+import { blogAPI } from "../utils/api";
 import blog1 from "../assets/blog/blog1.png";
 import blog2 from "../assets/blog/blog2.png";
 import blog3 from "../assets/blog/blog3.png";
 
+const fallbackImages = [blog1, blog2, blog3];
+
+const formatDate = (value) => {
+  if (!value) return "Recently";
+
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? "Recently"
+    : new Intl.DateTimeFormat("en-IN", {
+        dateStyle: "long",
+      }).format(date);
+};
+
+const getErrorMessage = (error) =>
+  error?.response?.data?.message || "Blogs could not be loaded right now.";
+
+const getPreviewText = (blog) => {
+  if (blog.excerpt) return blog.excerpt;
+
+  const content = blog.content || "";
+  return content.length > 180 ? `${content.slice(0, 180).trim()}...` : content;
+};
+
 const Blog = () => {
-  /* ====================================== */
-  /* BLOG DATA */
-  /* ====================================== */
+  const [blogs, setBlogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [expandedBlogId, setExpandedBlogId] = useState(null);
 
-  const blogs = [
-    {
-      id: 1,
+  const loadBlogs = async () => {
+    setLoading(true);
+    setError("");
 
-      title:
-        "How Paachcharam Makes Tamil Learning Fun For Children",
+    try {
+      const response = await blogAPI.getBlogs();
+      setBlogs(response.data.data || []);
+    } catch (requestError) {
+      setError(getErrorMessage(requestError));
+    } finally {
+      setLoading(false);
+    }
+  };
 
-      description:
-        "Interactive Tamil books help children learn language skills through colorful storytelling, activities and playful reading experiences.",
+  useEffect(() => {
+    let cancelled = false;
 
-      image: blog1,
+    blogAPI
+      .getBlogs()
+      .then((response) => {
+        if (!cancelled) setBlogs(response.data.data || []);
+      })
+      .catch((requestError) => {
+        if (!cancelled) setError(getErrorMessage(requestError));
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
 
-      author:
-        "Kuviyam Publications",
-
-      date:
-        "August 18, 2026",
-
-      category:
-        "Tamil Learning",
-    },
-
-    {
-      id: 2,
-
-      title:
-        "Why Story Books Are Important For Early Childhood Growth",
-
-      description:
-        "Reading books during childhood improves creativity, communication skills and emotional intelligence in young learners.",
-
-      image: blog2,
-
-      author:
-        "Inithinithu Team",
-
-      date:
-        "August 12, 2026",
-
-      category:
-        "Parenting",
-    },
-
-    {
-      id: 3,
-
-      title:
-        "Arivuamudhu Books Create Joyful Reading Habits",
-
-      description:
-        "Children naturally develop reading interest when books are interactive, visual and emotionally engaging.",
-
-      image: blog3,
-
-      author:
-        "Arivuamudhu",
-
-      date:
-        "August 05, 2026",
-
-      category:
-        "Kids Stories",
-    },
-  ];
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
-    <div
-      className="
-        min-h-screen
-
-        overflow-hidden
-
-        bg-gradient-to-br
-        from-brand-purple-50
-        via-brand-gold-50
-        to-brand-teal-50
-
-        relative
-      "
-    >
-      {/* ====================================== */}
-      {/* NAVBAR */}
-      {/* ====================================== */}
-
+    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-brand-purple-50 via-brand-gold-50 to-brand-teal-50">
       <Navbar />
 
-      {/* ====================================== */}
-      {/* FLOATING ELEMENTS */}
-      {/* ====================================== */}
-
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-20 left-10 text-6xl opacity-20 animate-bounce">
-          📚
-        </div>
-
-        <div className="absolute top-32 right-10 text-5xl opacity-20 animate-pulse">
-          🌈
-        </div>
-
-        <div className="absolute bottom-20 left-20 text-5xl opacity-20 animate-bounce">
-          ✨
-        </div>
-
-        <div className="absolute bottom-24 right-24 text-6xl opacity-20 animate-pulse">
-          🧸
-        </div>
-      </div>
-
-      {/* ====================================== */}
-      {/* HERO SECTION */}
-      {/* ====================================== */}
-
-      <section
-        className="
-          relative z-10
-
-          pt-24
-          pb-16
-
-          px-6
-        "
-      >
-        <div className="max-w-7xl mx-auto">
-          {/* HERO */}
-
-          <motion.div
-            initial={{
-              opacity: 0,
-              y: 40,
-            }}
-            animate={{
-              opacity: 1,
-              y: 0,
-            }}
-            transition={{
-              duration: 0.8,
-            }}
+      <main className="relative z-10 px-6 pb-20 pt-16">
+        <div className="mx-auto max-w-7xl">
+          <motion.header
+            initial={{ opacity: 0, y: 32 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
             className="text-center"
           >
-            {/* BADGE */}
-
-            <div
-              className="
-                inline-flex items-center gap-3
-
-                bg-white/80
-
-                backdrop-blur-md
-
-                px-6 py-3
-
-                rounded-full
-
-                shadow-xl
-
-                border border-white
-              "
-            >
-              <span className="text-2xl">
-                ✍️
-              </span>
-
-              <span
-                className="
-                  font-black
-
-                  text-brand-purple-500
-
-                  text-lg
-                "
-              >
+            <div className="inline-flex items-center gap-3 rounded-full border border-white bg-white/80 px-6 py-3 shadow-xl backdrop-blur-md">
+              <BookOpen size={24} className="text-brand-purple-500" />
+              <span className="text-lg font-black text-brand-purple-500">
                 Kuviyam Blog
               </span>
             </div>
 
-            {/* TITLE */}
-
-            <h1
-              className="
-                mt-8
-
-                text-5xl
-                md:text-7xl
-
-                font-black
-
-                text-gray-900
-
-                leading-tight
-              "
-            >
+            <h1 className="mt-8 text-5xl font-black leading-tight text-gray-900 md:text-7xl">
               Things
-              <span
-                className="
-                  block
-
-                  bg-gradient-to-r
-                  from-brand-purple-500
-                  via-pink-500
-                  to-brand-teal-500
-
-                  bg-clip-text
-
-                  text-transparent
-                "
-              >
+              <span className="block bg-gradient-to-r from-brand-purple-500 via-pink-500 to-brand-teal-500 bg-clip-text text-transparent">
                 To Read
               </span>
             </h1>
 
-            {/* DESCRIPTION */}
-
-            <p
-              className="
-                mt-6
-
-                max-w-3xl
-
-                mx-auto
-
-                text-lg
-                md:text-xl
-
-                text-gray-600
-
-                leading-9
-              "
-            >
-              Tamil learning stories,
-              parenting ideas and
-              joyful reading moments
-              from Paachcharam,
-              Inithinithu &
-              Arivuamudhu ✨
+            <p className="mx-auto mt-6 max-w-3xl text-lg leading-9 text-gray-600 md:text-xl">
+              Tamil learning stories, parenting ideas, and joyful reading
+              moments from Kuviyam Publications.
             </p>
-          </motion.div>
+          </motion.header>
 
-          {/* ====================================== */}
-          {/* BLOG CARDS */}
-          {/* ====================================== */}
+          {loading && (
+            <div className="mt-20 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+              {[1, 2, 3].map((item) => (
+                <div
+                  key={item}
+                  className="h-[520px] animate-pulse rounded-2xl bg-white/80 shadow-xl"
+                />
+              ))}
+            </div>
+          )}
 
-          <div className="mt-24 space-y-16">
-            {blogs.map(
-              (blog, index) => (
-                <motion.div
-                  key={blog.id}
-                  initial={{
-                    opacity: 0,
-                    y: 50,
-                  }}
-                  whileInView={{
-                    opacity: 1,
-                    y: 0,
-                  }}
-                  viewport={{
-                    once: true,
-                  }}
-                  transition={{
-                    duration: 0.6,
-                  }}
-                  className={`
-                    grid
-                    grid-cols-1
-                    lg:grid-cols-2
+          {!loading && error && (
+            <div className="mx-auto mt-20 max-w-2xl rounded-2xl border border-brand-lavender-200 bg-white/90 p-8 text-center shadow-xl">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-purple-100 text-brand-purple-600">
+                <RefreshCw size={30} />
+              </div>
+              <h2 className="text-2xl font-black text-gray-900">
+                Unable to load blogs
+              </h2>
+              <p className="mt-3 text-gray-600">{error}</p>
+              <button
+                type="button"
+                onClick={loadBlogs}
+                className="mt-6 inline-flex items-center justify-center gap-2 rounded-xl bg-brand-purple-600 px-5 py-3 font-black text-white shadow-lg transition hover:bg-brand-purple-700"
+              >
+                <RefreshCw size={18} />
+                Try Again
+              </button>
+            </div>
+          )}
 
-                    gap-12
+          {!loading && !error && blogs.length === 0 && (
+            <div className="mx-auto mt-20 max-w-2xl rounded-2xl border border-brand-lavender-200 bg-white/90 p-8 text-center shadow-xl">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-teal-100 text-brand-teal-700">
+                <BookOpen size={30} />
+              </div>
+              <h2 className="text-2xl font-black text-gray-900">
+                No blogs published yet
+              </h2>
+              <p className="mt-3 text-gray-600">
+                Published stories and updates will appear here.
+              </p>
+            </div>
+          )}
 
-                    items-center
+          {!loading && !error && blogs.length > 0 && (
+            <div className="mt-20 space-y-16">
+              {blogs.map((blog, index) => {
+                const isExpanded = expandedBlogId === blog.id;
+                const fallbackImage = fallbackImages[index % fallbackImages.length];
+                const image = blog.imageUrl || fallbackImage;
 
-                    ${
-                      index % 2 !== 0
-                        ? "lg:[&>*:first-child]:order-2"
-                        : ""
-                    }
-                  `}
-                >
-                  {/* IMAGE */}
-
-                  <div className="relative group">
-                    <div
-                      className="
-                        absolute
-                        -inset-4
-
-                        bg-gradient-to-r
-                        from-brand-purple-300
-                        to-brand-teal-300
-
-                        rounded-[40px]
-
-                        blur-2xl
-
-                        opacity-20
-
-                        group-hover:opacity-40
-
-                        transition duration-500
-                      "
-                    ></div>
-
-                    <div
-                      className="
-                        relative
-
-                        overflow-hidden
-
-                        rounded-[40px]
-
-                        bg-white
-
-                        shadow-2xl
-
-                        border border-white
-                      "
-                    >
-                      <img
-                        src={blog.image}
-                        alt={blog.title}
-                        className="
-                          w-full
-
-                          h-[500px]
-
-                          object-cover
-
-                          group-hover:scale-105
-
-                          transition duration-700
-                        "
-                      />
-                    </div>
-                  </div>
-
-                  {/* CONTENT */}
-
-                  <div>
-                    {/* CATEGORY */}
-
-                    <div
-                      className="
-                        inline-flex items-center
-
-                        bg-gradient-to-r
-                        from-brand-gold-400
-                        to-orange-400
-
-                        text-white
-
-                        px-5 py-2
-
-                        rounded-full
-
-                        text-sm
-
-                        font-black
-
-                        shadow-lg
-                      "
-                    >
-                      {
-                        blog.category
-                      }
-                    </div>
-
-                    {/* TITLE */}
-
-                    <h2
-                      className="
-                        mt-7
-
-                        text-4xl
-                        md:text-5xl
-
-                        font-black
-
-                        text-gray-900
-
-                        leading-tight
-                      "
-                    >
-                      {blog.title}
-                    </h2>
-
-                    {/* AUTHOR */}
-
-                    <div
-                      className="
-                        flex flex-wrap items-center gap-6
-
-                        mt-7
-
-                        text-gray-600
-                      "
-                    >
-                      {/* AUTHOR */}
-
-                      <div className="flex items-center gap-2">
-                        <User
-                          size={20}
+                return (
+                  <motion.article
+                    key={blog.id}
+                    initial={{ opacity: 0, y: 40 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    transition={{ duration: 0.5 }}
+                    className={`grid grid-cols-1 items-center gap-10 lg:grid-cols-2 ${
+                      index % 2 !== 0 ? "lg:[&>*:first-child]:order-2" : ""
+                    }`}
+                  >
+                    <div className="relative group">
+                      <div className="absolute -inset-3 rounded-2xl bg-gradient-to-r from-brand-purple-300 to-brand-teal-300 opacity-20 blur-2xl transition duration-500 group-hover:opacity-40" />
+                      <div className="relative overflow-hidden rounded-2xl border border-white bg-white shadow-2xl">
+                        <img
+                          src={image}
+                          alt={blog.title}
+                          onError={(event) => {
+                            event.currentTarget.src = fallbackImage;
+                          }}
+                          className="h-[360px] w-full object-cover transition duration-700 group-hover:scale-105 md:h-[500px]"
                         />
+                      </div>
+                    </div>
 
-                        <span className="font-bold">
-                          {
-                            blog.author
+                    <div>
+                      <div className="inline-flex items-center rounded-full bg-gradient-to-r from-brand-gold-400 to-orange-400 px-5 py-2 text-sm font-black text-white shadow-lg">
+                        Kuviyam Story
+                      </div>
+
+                      <h2 className="mt-7 text-4xl font-black leading-tight text-gray-900 md:text-5xl">
+                        {blog.title}
+                      </h2>
+
+                      <div className="mt-7 flex flex-wrap items-center gap-6 text-gray-600">
+                        <div className="flex items-center gap-2">
+                          <User size={20} />
+                          <span className="font-bold">
+                            {blog.author || "Kuviyam Publications"}
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <CalendarDays size={20} />
+                          <span className="font-bold">
+                            {formatDate(blog.createdAt)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <p className="mt-8 whitespace-pre-line text-xl leading-10 text-gray-600">
+                        {isExpanded ? blog.content : getPreviewText(blog)}
+                      </p>
+
+                      {blog.content !== getPreviewText(blog) && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setExpandedBlogId(isExpanded ? null : blog.id)
                           }
-                        </span>
-                      </div>
-
-                      {/* DATE */}
-
-                      <div className="flex items-center gap-2">
-                        <CalendarDays
-                          size={20}
-                        />
-
-                        <span className="font-bold">
-                          {blog.date}
-                        </span>
-                      </div>
+                          className="mt-10 inline-flex items-center gap-3 rounded-xl bg-gradient-to-r from-brand-purple-500 to-brand-teal-500 px-8 py-5 text-lg font-black text-white shadow-2xl transition duration-300 hover:scale-105 hover:from-brand-purple-600 hover:to-brand-teal-600"
+                        >
+                          {isExpanded ? "Show Less" : "Read More"}
+                          <ArrowRight
+                            size={22}
+                            className={isExpanded ? "-rotate-90" : ""}
+                          />
+                        </button>
+                      )}
                     </div>
-
-                    {/* DESCRIPTION */}
-
-                    <p
-                      className="
-                        mt-8
-
-                        text-xl
-
-                        text-gray-600
-
-                        leading-10
-                      "
-                    >
-                      {
-                        blog.description
-                      }
-                    </p>
-
-                    {/* BUTTON */}
-
-                    <button
-                      className="
-                        mt-10
-
-                        inline-flex items-center gap-3
-
-                        px-8 py-5
-
-                        rounded-full
-
-                        bg-gradient-to-r
-                        from-brand-purple-500
-                        to-brand-teal-500
-
-                        hover:from-brand-purple-600
-                        hover:to-brand-teal-600
-
-                        text-white
-
-                        text-lg
-
-                        font-black
-
-                        shadow-2xl
-
-                        hover:scale-105
-
-                        transition duration-300
-                      "
-                    >
-                      Read More
-
-                      <ArrowRight
-                        size={22}
-                      />
-                    </button>
-                  </div>
-                </motion.div>
-              )
-            )}
-          </div>
+                  </motion.article>
+                );
+              })}
+            </div>
+          )}
         </div>
-      </section>
-
-      {/* ====================================== */}
-      {/* FOOTER */}
-      {/* ====================================== */}
+      </main>
 
       <Footer />
-
-      {/* ====================================== */}
-      {/* WHATSAPP */}
-      {/* ====================================== */}
-
       <WhatsAppButton />
     </div>
   );

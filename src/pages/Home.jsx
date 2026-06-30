@@ -9,20 +9,32 @@ import {
 } from "framer-motion";
 
 import Navbar from "../components/Navbar";
-import BookFilterBar from "../components/BookFilterBar";
+
+import Header from "../components/Header";
+
+// import BookFilterBar from "../components/BookFilterBar";
+
 import Hero from "../components/Hero";
+
 import FeaturedBooks from "../components/FeaturedBooks";
+
 import Categories from "../components/Categories";
+
 import Testimonials from "../components/Testimonials";
+
 import Footer from "../components/Footer";
+
 import WhatsAppButton from "../components/WhatsAppButton";
+
 import PageLoader from "../components/PageLoader";
 
 const Home = () => {
   const [loading, setLoading] =
     useState(true);
 
+  /* ====================================== */
   /* PAGE LOADER */
+  /* ====================================== */
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -32,7 +44,9 @@ const Home = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  /* ====================================== */
   /* SHOW LOADER */
+  /* ====================================== */
 
   if (loading) {
     return <PageLoader />;
@@ -53,7 +67,6 @@ const Home = () => {
         transition={{
           duration: 0.6,
         }}
-
         className="
           relative
 
@@ -139,14 +152,30 @@ const Home = () => {
           "
         >
           {/* ====================================== */}
-          {/* NAVBAR */}
+          {/* HEADER */}
           {/* ====================================== */}
 
           <div
             className="
               relative
 
-              z-[120]
+              z-[140]
+            "
+          >
+            <Header />
+          </div>
+
+          {/* ====================================== */}
+          {/* NAVBAR */}
+          {/* ====================================== */}
+
+          <div
+            className="
+              sticky
+
+              top-0
+
+              z-[130]
             "
           >
             <Navbar />
@@ -156,17 +185,19 @@ const Home = () => {
           {/* BOOK FILTER BAR */}
           {/* ====================================== */}
 
-          <div
+          {/* <div
             className="
-              relative
+              sticky
 
-              z-[110]
+              top-[108px]
+
+              z-[120]
 
               overflow-visible
             "
           >
             <BookFilterBar />
-          </div>
+          </div> */}
 
           {/* ====================================== */}
           {/* HERO SECTION */}
@@ -184,11 +215,13 @@ const Home = () => {
             transition={{
               duration: 0.8,
             }}
-
             className="
               relative
 
               z-10
+
+              pt-6
+              md:pt-10
             "
           >
             <Hero />
@@ -213,7 +246,6 @@ const Home = () => {
             transition={{
               duration: 0.8,
             }}
-
             className="
               relative
 
@@ -242,7 +274,6 @@ const Home = () => {
             transition={{
               duration: 0.8,
             }}
-
             className="
               relative
 
@@ -271,7 +302,6 @@ const Home = () => {
             transition={{
               duration: 0.8,
             }}
-
             className="
               relative
 
@@ -299,7 +329,7 @@ const Home = () => {
           {/* WHATSAPP BUTTON */}
           {/* ====================================== */}
 
-          <div className="z-[200] relative">
+          <div className="relative z-[200]">
             <WhatsAppButton />
           </div>
         </div>

@@ -15,18 +15,27 @@ import {
   X,
   Sparkles,
   LogOut,
-  User,
 } from "lucide-react";
 
 import logo from "../assets/Paachcharam_logo_02.png";
 
-import { CartContext } from "../context/CartContext";
+import { CartContext } from "../context/cartContextValue";
 
-import { AuthContext } from "../context/AuthContext";
+import { AuthContext } from "../context/authContextValue";
 
 const Navbar = () => {
   const [menuOpen, setMenuOpen] =
     useState(false);
+
+  // Helper function to get initials from name
+  const getInitials = (name) => {
+    if (!name) return "U";
+    const nameParts = name.trim().split(/\s+/);
+    if (nameParts.length >= 2) {
+      return (nameParts[0].charAt(0) + nameParts[nameParts.length - 1].charAt(0)).toUpperCase();
+    }
+    return name.charAt(0).toUpperCase();
+  };
 
   const navigate = useNavigate();
 
@@ -61,118 +70,84 @@ const Navbar = () => {
   /* NAV LINKS */
   /* ====================================== */
 
+  // Create navLinks with optional admin link
   const navLinks = [
     {
       path: "/",
-
       label: "Home",
-
       emoji: "🏠",
-
       bg: `
         bg-gradient-to-r
         from-brand-purple-500
         to-brand-purple-400
-
         hover:from-brand-purple-600
         hover:to-brand-purple-500
       `,
-
       text: "text-white",
     },
-
     {
       path: "/shop",
-
       label: "Shop",
-
       emoji: "🛍️",
-
       bg: `
         bg-gradient-to-r
         from-brand-teal-400
         to-brand-teal-500
-
         hover:from-brand-teal-500
         hover:to-brand-teal-600
       `,
-
       text: "text-white",
     },
-
     {
       path: "/gallery",
-
       label: "Gallery",
-
       emoji: "🖼️",
-
       bg: `
         bg-gradient-to-r
         from-pink-400
         to-rose-500
-
         hover:from-pink-500
         hover:to-rose-600
       `,
-
       text: "text-white",
     },
-
     {
       path: "/blog",
-
       label: "Blog",
-
       emoji: "✍️",
-
       bg: `
         bg-gradient-to-r
         from-indigo-400
         to-blue-500
-
         hover:from-indigo-500
         hover:to-blue-600
       `,
-
       text: "text-white",
     },
-
     {
       path: "/about",
-
       label: "About",
-
       emoji: "📘",
-
       bg: `
         bg-gradient-to-r
         from-brand-red-400
         to-brand-red-500
-
         hover:from-brand-red-600
         hover:to-brand-red-700
       `,
-
       text: "text-white",
     },
-
     {
       path: "/contact",
-
       label: "Contact",
-
       emoji: "📞",
-
       bg: `
         bg-gradient-to-r
         from-brand-gold-400
         to-brand-gold-500
-
         hover:from-brand-gold-500
         hover:to-brand-gold-600
       `,
-
       text: "text-gray-900",
     },
   ];
@@ -437,16 +412,39 @@ const Navbar = () => {
 
             {isAuthenticated ? (
               <div className="hidden xl:flex items-center gap-3">
+                {/* ADMIN DASHBOARD (if admin) */}
+                {user?.isAdmin && (
+                  <Link to="/admin">
+                    <div
+                      className="
+                        flex items-center gap-2
+                        h-[62px]
+                        px-5
+                        rounded-2xl
+                        bg-gradient-to-r
+                        from-amber-500
+                        to-orange-600
+                        hover:from-amber-600
+                        hover:to-orange-700
+                        text-white
+                        font-black
+                        shadow-xl
+                        hover:scale-105
+                        transition duration-300
+                      "
+                    >
+                      <span className="text-xl">⚙️</span>
+                      Admin
+                    </div>
+                  </Link>
+                )}
                 {/* PROFILE */}
-
                 <Link to="/profile">
                   <div
                     className="
-                      flex items-center gap-3
+                      flex items-center justify-center
 
-                      h-[62px]
-
-                      px-5
+                      w-[62px] h-[62px]
 
                       rounded-2xl
 
@@ -456,7 +454,7 @@ const Navbar = () => {
 
                       text-white
 
-                      font-black
+                      font-black text-2xl
 
                       shadow-xl
 
@@ -465,11 +463,7 @@ const Navbar = () => {
                       transition duration-300
                     "
                   >
-                    <User size={20} />
-
-                    <span className="max-w-[120px] truncate">
-                      {user?.name}
-                    </span>
+                    {getInitials(user?.name)}
                   </div>
                 </Link>
 
@@ -699,6 +693,32 @@ const Navbar = () => {
           <div className="mt-6 flex flex-col gap-4">
             {isAuthenticated ? (
               <>
+                {/* ADMIN LINK (if admin) */}
+                {user?.isAdmin && (
+                  <Link
+                    to="/admin"
+                    onClick={() =>
+                      setMenuOpen(false)
+                    }
+                    className="
+                      flex items-center justify-center gap-3
+                      px-6 py-4
+                      rounded-2xl
+                      bg-gradient-to-r
+                      from-amber-500
+                      to-orange-600
+                      hover:from-amber-600
+                      hover:to-orange-700
+                      text-white
+                      text-lg
+                      font-black
+                      shadow-xl
+                    "
+                  >
+                    <span className="text-xl">⚙️</span>
+                    Admin Dashboard
+                  </Link>
+                )}
                 <Link
                   to="/profile"
                   onClick={() =>
@@ -724,9 +744,10 @@ const Navbar = () => {
                     shadow-xl
                   "
                 >
-                  <User size={20} />
-
-                  {user?.name}
+                  <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-lg">
+                    {getInitials(user?.name)}
+                  </div>
+                  Profile
                 </Link>
 
                 <button

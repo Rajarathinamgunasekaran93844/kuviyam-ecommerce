@@ -15,41 +15,41 @@ import {
   Lock,
   Sparkles,
 } from "lucide-react";
-
-import { AuthContext } from "../context/AuthContext";
+import { toast } from "react-toastify";
+import { AuthContext } from "../context/authContextValue";
+import { authAPI } from "../utils/api";
+import { validateEmail } from "../utils/validators";
 
 const Login = () => {
   const navigate = useNavigate();
 
-  const { login } =
-    useContext(AuthContext);
+  const { login } = useContext(AuthContext);
 
   /* ====================================== */
   /* STATES */
   /* ====================================== */
 
-  const [showPassword, setShowPassword] =
-    useState(false);
-
-  const [formData, setFormData] =
-    useState({
-      email: "",
-      password: "",
-    });
-
-  const [error, setError] =
-    useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
 
   /* FORGOT PASSWORD */
 
-  const [showForgotPassword, setShowForgotPassword] =
-    useState(false);
-
-  const [resetEmail, setResetEmail] =
-    useState("");
-
-  const [resetMessage, setResetMessage] =
-    useState("");
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetStep, setResetStep] = useState("request");
+  const [resetForm, setResetForm] = useState({
+    email: "",
+    otp: "",
+    password: "",
+    confirmPassword: "",
+  });
+  const [resetMessage, setResetMessage] = useState("");
+  const [resetError, setResetError] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
 
   /* ====================================== */
   /* HANDLE INPUT CHANGE */
@@ -58,9 +58,7 @@ const Login = () => {
   const handleChange = (e) => {
     setFormData({
       ...formData,
-
-      [e.target.name]:
-        e.target.value,
+      [e.target.name]: e.target.value,
     });
   };
 
@@ -68,37 +66,128 @@ const Login = () => {
   /* HANDLE LOGIN */
   /* ====================================== */
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    const errors = {};
 
-    const savedUser =
-      JSON.parse(
-        localStorage.getItem(
-          "kuviyamUser"
-        )
-      );
+    if (!validateEmail(formData.email)) errors.email = "Please enter a valid email address.";
+    if (!formData.password) errors.password = "Password is required.";
 
-    if (!savedUser) {
-      setError(
-        "No account found. Please register first."
-      );
-
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
       return;
     }
 
-    if (
-      savedUser.email ===
-        formData.email &&
-      savedUser.password ===
-        formData.password
-    ) {
-      login(savedUser);
+    setFieldErrors({});
+    setLoading(true);
 
+    try {
+      await login(formData);
+      toast.success("Login successful!");
       navigate("/profile");
-    } else {
-      setError(
-        "Invalid email or password."
+    } catch (err) {
+      const backendError = err.response?.data?.message || "Invalid email or password.";
+      toast.error(backendError);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetForgotPasswordState = () => {
+    setResetStep("request");
+    setResetForm({
+      email: "",
+      otp: "",
+      password: "",
+      confirmPassword: "",
+    });
+    setResetMessage("");
+    setResetError("");
+    setResetLoading(false);
+  };
+
+  const handleResetChange = (e) => {
+    setResetForm({
+      ...resetForm,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const requestPasswordReset = async () => {
+    if (!validateEmail(resetForm.email)) {
+      setResetError("Please enter a valid registered email.");
+      setResetMessage("");
+      return;
+    }
+
+    setResetLoading(true);
+    setResetError("");
+    setResetMessage("");
+
+    try {
+      const response = await authAPI.forgotPassword({
+        email: resetForm.email,
+      });
+      const resetOtp = response.data.resetOtp;
+      setResetStep("reset");
+      setResetMessage(
+        resetOtp
+          ? `${response.data.message} Demo OTP: ${resetOtp}`
+          : response.data.message
       );
+      toast.success("Password reset OTP sent.");
+    } catch (err) {
+      const message =
+        err.response?.data?.message || "Unable to send password reset OTP.";
+      setResetError(message);
+      toast.error(message);
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
+  const submitNewPassword = async () => {
+    if (!resetForm.otp.trim()) {
+      setResetError("Please enter the OTP.");
+      return;
+    }
+
+    if (resetForm.password.length < 6) {
+      setResetError("Password must be at least 6 characters long.");
+      return;
+    }
+
+    if (resetForm.password !== resetForm.confirmPassword) {
+      setResetError("Passwords do not match.");
+      return;
+    }
+
+    setResetLoading(true);
+    setResetError("");
+
+    try {
+      const response = await authAPI.resetPassword({
+        email: resetForm.email,
+        otp: resetForm.otp,
+        password: resetForm.password,
+        confirmPassword: resetForm.confirmPassword,
+      });
+
+      toast.success(response.data.message);
+      setFormData((currentForm) => ({
+        ...currentForm,
+        email: resetForm.email,
+        password: "",
+      }));
+      setShowForgotPassword(false);
+      resetForgotPasswordState();
+    } catch (err) {
+      const message =
+        err.response?.data?.message || "Unable to reset password.";
+      setResetError(message);
+      toast.error(message);
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -217,29 +306,7 @@ const Login = () => {
           </p>
         </div>
 
-        {/* ====================================== */}
-        {/* ERROR */}
-        {/* ====================================== */}
 
-        {error && (
-          <div
-            className="
-              mt-8
-
-              bg-red-100
-
-              text-red-600
-
-              font-semibold
-
-              rounded-2xl
-
-              px-5 py-4
-            "
-          >
-            {error}
-          </div>
-        )}
 
         {/* ====================================== */}
         {/* FORM */}
@@ -271,14 +338,14 @@ const Login = () => {
               value={formData.email}
               onChange={handleChange}
               required
-              className="
+              className={`
                 w-full
 
                 h-[72px]
 
                 rounded-2xl
 
-                border-2 border-gray-200
+                border-2 ${fieldErrors.email ? 'border-red-400' : 'border-gray-200'}
 
                 bg-white/80
 
@@ -293,8 +360,11 @@ const Login = () => {
                 focus:ring-brand-purple-100
 
                 transition
-              "
+              `}
             />
+            {fieldErrors.email && (
+              <p className="text-red-500 text-sm font-semibold mt-2">{fieldErrors.email}</p>
+            )}
           </div>
 
           {/* PASSWORD */}
@@ -325,14 +395,14 @@ const Login = () => {
               }
               onChange={handleChange}
               required
-              className="
+              className={`
                 w-full
 
                 h-[72px]
 
                 rounded-2xl
 
-                border-2 border-gray-200
+                border-2 ${fieldErrors.password ? 'border-red-400' : 'border-gray-200'}
 
                 bg-white/80
 
@@ -347,33 +417,19 @@ const Login = () => {
                 focus:ring-brand-purple-100
 
                 transition
-              "
+              `}
             />
-
-            {/* TOGGLE */}
-
             <button
               type="button"
-              onClick={() =>
-                setShowPassword(
-                  !showPassword
-                )
-              }
-              className="
-                absolute
-                right-5
-                top-1/2
-                -translate-y-1/2
-
-                text-gray-500
-              "
+              onClick={() => setShowPassword((value) => !value)}
+              className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-brand-purple-500 transition"
+              aria-label={showPassword ? "Hide password" : "Show password"}
             >
-              {showPassword ? (
-                <EyeOff size={24} />
-              ) : (
-                <Eye size={24} />
-              )}
+              {showPassword ? <EyeOff size={24} /> : <Eye size={24} />}
             </button>
+            {fieldErrors.password && (
+              <p className="text-red-500 text-sm font-semibold mt-2">{fieldErrors.password}</p>
+            )}
           </div>
 
           {/* ====================================== */}
@@ -408,6 +464,7 @@ const Login = () => {
 
           <button
             type="submit"
+            disabled={loading}
             className="
               w-full
 
@@ -433,9 +490,11 @@ const Login = () => {
               hover:scale-[1.02]
 
               transition duration-300
+              disabled:opacity-70
+              disabled:cursor-not-allowed
             "
           >
-            LOGIN
+            {loading ? "LOGGING IN..." : "LOGIN"}
           </button>
         </form>
 
@@ -508,11 +567,8 @@ const Login = () => {
 
             <button
               onClick={() => {
-                setShowForgotPassword(
-                  false
-                );
-
-                setResetMessage("");
+                setShowForgotPassword(false);
+                resetForgotPasswordState();
               }}
               className="
                 absolute
@@ -551,7 +607,7 @@ const Login = () => {
                 text-gray-900
               "
             >
-              Forget Password
+              {resetStep === "request" ? "Forgot Password" : "Reset Password"}
             </h2>
 
             {/* DESCRIPTION */}
@@ -567,12 +623,12 @@ const Login = () => {
                 mt-5
               "
             >
-              Enter your registered
-              email to reset password
-              ✨
+              {resetStep === "request" 
+                ? "Enter your registered email to reset password ✨" 
+                : "Enter the OTP and your new password ✨"}
             </p>
 
-            {/* MESSAGE */}
+            {/* MESSAGE/ERROR */}
 
             {resetMessage && (
               <div
@@ -594,90 +650,171 @@ const Login = () => {
               </div>
             )}
 
-            {/* INPUT */}
-
-            <div className="mt-10">
-              <input
-                type="email"
-                placeholder="Email"
-                value={resetEmail}
-                onChange={(e) =>
-                  setResetEmail(
-                    e.target.value
-                  )
-                }
+            {resetError && (
+              <div
                 className="
-                  w-full
+                  mt-4
 
-                  h-[74px]
+                  bg-red-100
+
+                  text-red-600
+
+                  font-bold
 
                   rounded-2xl
 
-                  border-2 border-gray-200
-
-                  px-6
-
-                  text-xl
-
-                  outline-none
-
-                  focus:border-brand-purple-400
-                  focus:ring-4
-                  focus:ring-brand-purple-100
-
-                  transition
+                  px-5 py-4
                 "
-              />
-            </div>
+              >
+                {resetError}
+              </div>
+            )}
 
-            {/* BUTTON */}
+            {/* STEP 1: REQUEST OTP */}
 
-            <button
-              onClick={() => {
-                if (!resetEmail) {
-                  setResetMessage(
-                    'Please enter email.'
-                  );
+            {resetStep === "request" && (
+              <div className="mt-10 space-y-6">
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="Enter your registered email"
+                  value={resetForm.email}
+                  onChange={handleResetChange}
+                  className="
+                    w-full
+                    h-[74px]
+                    rounded-2xl
+                    border-2 border-gray-200
+                    px-6
+                    text-xl
+                    outline-none
+                    focus:border-brand-purple-400
+                    focus:ring-4
+                    focus:ring-brand-purple-100
+                    transition
+                  "
+                />
 
-                  return;
-                }
+                <button
+                  onClick={requestPasswordReset}
+                  disabled={resetLoading}
+                  className="
+                    w-full
+                    h-[64px]
+                    rounded-2xl
+                    bg-gradient-to-r
+                    from-brand-purple-500
+                    to-brand-teal-500
+                    hover:from-brand-purple-600
+                    hover:to-brand-teal-600
+                    text-white
+                    text-xl
+                    font-black
+                    shadow-xl
+                    transition duration-300
+                    hover:scale-[1.01]
+                    disabled:opacity-70
+                    disabled:cursor-not-allowed
+                  "
+                >
+                  {resetLoading ? "SENDING..." : "SEND OTP"}
+                </button>
+              </div>
+            )}
 
-                setResetMessage(
-                  'Password reset link sent successfully ✨'
-                );
-              }}
-              className="
-                w-full
+            {/* STEP 2: RESET PASSWORD */}
 
-                h-[64px]
+            {resetStep === "reset" && (
+              <div className="mt-10 space-y-5">
+                <input
+                  type="text"
+                  name="otp"
+                  placeholder="Enter OTP"
+                  value={resetForm.otp}
+                  onChange={handleResetChange}
+                  className="
+                    w-full
+                    h-[74px]
+                    rounded-2xl
+                    border-2 border-gray-200
+                    px-6
+                    text-xl
+                    outline-none
+                    focus:border-brand-purple-400
+                    focus:ring-4
+                    focus:ring-brand-purple-100
+                    transition
+                  "
+                />
 
-                mt-8
+                <input
+                  type="password"
+                  name="password"
+                  placeholder="Enter new password"
+                  value={resetForm.password}
+                  onChange={handleResetChange}
+                  className="
+                    w-full
+                    h-[74px]
+                    rounded-2xl
+                    border-2 border-gray-200
+                    px-6
+                    text-xl
+                    outline-none
+                    focus:border-brand-purple-400
+                    focus:ring-4
+                    focus:ring-brand-purple-100
+                    transition
+                  "
+                />
 
-                rounded-2xl
+                <input
+                  type="password"
+                  name="confirmPassword"
+                  placeholder="Confirm new password"
+                  value={resetForm.confirmPassword}
+                  onChange={handleResetChange}
+                  className="
+                    w-full
+                    h-[74px]
+                    rounded-2xl
+                    border-2 border-gray-200
+                    px-6
+                    text-xl
+                    outline-none
+                    focus:border-brand-purple-400
+                    focus:ring-4
+                    focus:ring-brand-purple-100
+                    transition
+                  "
+                />
 
-                bg-gradient-to-r
-                from-brand-gold-400
-                to-purple-400
-
-                hover:from-brand-gold-500
-                hover:to-purple-500
-
-                text-white
-
-                text-xl
-
-                font-black
-
-                shadow-xl
-
-                transition duration-300
-
-                hover:scale-[1.01]
-              "
-            >
-              SEND PASSWORD RESET
-              LINK
-            </button>
+                <button
+                  onClick={submitNewPassword}
+                  disabled={resetLoading}
+                  className="
+                    w-full
+                    h-[64px]
+                    rounded-2xl
+                    bg-gradient-to-r
+                    from-brand-gold-400
+                    to-purple-400
+                    hover:from-brand-gold-500
+                    hover:to-purple-500
+                    text-white
+                    text-xl
+                    font-black
+                    shadow-xl
+                    transition duration-300
+                    hover:scale-[1.01]
+                    disabled:opacity-70
+                    disabled:cursor-not-allowed
+                  "
+                >
+                  {resetLoading ? "RESETTING..." : "RESET PASSWORD"}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

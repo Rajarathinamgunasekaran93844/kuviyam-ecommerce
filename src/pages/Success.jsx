@@ -1,7 +1,5 @@
-import {
-  Link,
-} from "react-router-dom";
-
+import { Link } from "react-router-dom";
+import { useContext, useState, useEffect } from "react";
 import {
   CheckCircle,
   Sparkles,
@@ -9,28 +7,74 @@ import {
   Home,
   ShoppingBag,
 } from "lucide-react";
+import { toast } from "react-toastify";
 
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import { orderAPI } from "../utils/api";
+import { AuthContext } from "../context/authContextValue";
 
 const Success = () => {
+  const { isAuthenticated } = useContext(AuthContext);
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   /* GET ORDER */
+  useEffect(() => {
+    let cancelled = false;
 
-  const order = JSON.parse(
+    const fetchLatestOrder = async () => {
+      await Promise.resolve();
 
-    localStorage.getItem(
-      "latestOrder"
-    )
+      if (cancelled) {
+        return;
+      }
 
-  );
+      if (!isAuthenticated) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const response = await orderAPI.getLatestOrder();
+        if (!cancelled) {
+          setOrder(response.data.order || response.data.latestOrder);
+        }
+      } catch (error) {
+        console.error("Failed to fetch order:", error);
+        toast.error("Failed to load order details");
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchLatestOrder();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated]);
+
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <section className="relative overflow-hidden min-h-screen flex items-center justify-center px-6 py-16 md:py-20 bg-gradient-to-br from-brand-purple-100 via-brand-gold-50 to-brand-teal-100">
+          <div className="text-center">
+            <div className="text-6xl animate-bounce mb-6">📚</div>
+            <h2 className="text-2xl font-black text-gray-800">Loading order details...</h2>
+          </div>
+        </section>
+        <Footer />
+      </>
+    );
+  }
 
   return (
-
     <>
-
       <Navbar />
-
       <section className="relative overflow-hidden min-h-screen flex items-center justify-center px-6 py-16 md:py-20 bg-gradient-to-br from-brand-purple-100 via-brand-gold-50 to-brand-teal-100">
 
         {/* FLOATING CARTOON ELEMENTS */}

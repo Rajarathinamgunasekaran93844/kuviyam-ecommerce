@@ -13,7 +13,7 @@ import {
 
 import PageLoader from "../components/PageLoader";
 
-import { AuthContext } from "../context/AuthContext";
+import { AuthContext } from "../context/authContextValue";
 
 /* ====================================== */
 /* LAZY PAGES */
@@ -73,15 +73,24 @@ const Register = lazy(() =>
   import("../pages/Register")
 );
 
+const Admin = lazy(() =>
+  import("../pages/Admin")
+);
+
 /* ====================================== */
 /* PROTECTED ROUTE */
 /* ====================================== */
 
 const ProtectedRoute = ({
   children,
+  requireAdmin = false,
 }) => {
-  const { isAuthenticated } =
+  const { isAuthenticated, user, loading } =
     useContext(AuthContext);
+
+  if (loading) {
+    return <PageLoader />;
+  }
 
   if (!isAuthenticated) {
     return (
@@ -90,6 +99,10 @@ const ProtectedRoute = ({
         replace
       />
     );
+  }
+
+  if (requireAdmin && !user?.isAdmin) {
+    return <Navigate to="/" replace />;
   }
 
   return children;
@@ -309,6 +322,17 @@ const AppRoutes = () => {
             element={
               <ProtectedRoute>
                 <Profile />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* ADMIN DASHBOARD */}
+
+          <Route
+            path="/admin/*"
+            element={
+              <ProtectedRoute requireAdmin>
+                <Admin />
               </ProtectedRoute>
             }
           />

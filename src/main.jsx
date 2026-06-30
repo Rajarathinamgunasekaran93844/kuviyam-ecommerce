@@ -6,6 +6,10 @@ import {
   AnimatePresence,
 } from "framer-motion";
 
+import {
+  ToastContainer,
+} from "react-toastify";
+
 import "react-toastify/dist/ReactToastify.css";
 
 import App from "./App";
@@ -47,6 +51,21 @@ ReactDOM.createRoot(
           {/* MAIN APP */}
 
           <App />
+
+          {/* TOAST ALERTS */}
+
+          <ToastContainer
+            position="top-right"
+            autoClose={2500}
+            hideProgressBar={
+              false
+            }
+            newestOnTop
+            closeOnClick
+            pauseOnHover
+            draggable
+            theme="colored"
+          />
         </CartProvider>
       </AuthProvider>
     </AnimatePresence>
