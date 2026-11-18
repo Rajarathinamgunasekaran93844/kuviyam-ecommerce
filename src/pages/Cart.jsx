@@ -22,6 +22,7 @@ import {
 import Navbar from "../components/Navbar";
 
 import Footer from "../components/Footer";
+import { toDisplayImageUrl } from "../utils/imageUrls";
 
 import { CartContext } from "../context/cartContextValue";
 
@@ -505,12 +506,14 @@ const Cart = () => {
 
                         <div className="relative">
                           <img
-                            src={item?.images?.[0] || "/Paachcharam_book.png"}
+                            src={toDisplayImageUrl(item?.images?.[0] || "/Paachcharam_book.png")}
                             alt={item?.title}
                             className="
                               w-32 h-32
                               md:w-36 md:h-36
-                              object-cover
+                              object-contain
+                              bg-[#f7f2e9]
+                              p-2
                               rounded-[18px]
                               shadow-xl
                               border-4 border-white

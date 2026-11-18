@@ -17,15 +17,14 @@ import { toast } from "react-toastify";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import WhatsAppButton from "../components/WhatsAppButton";
+import PageIntro from "../components/PageIntro";
 import { AuthContext } from "../context/authContextValue";
 import { galleryAPI } from "../utils/api";
-import inithuinithuBook from "../assets/inithuinithu_book.jpeg";
-import arivuamudhuBook from "../assets/Arivuamudhu_book.png";
 
 const featuredMedia = [
   {
     id: "featured-reading",
-    url: inithuinithuBook,
+    url: "/inithuinithu_book.optimized.jpg",
     title: "Inithinithu Reading Time",
     category: "Kids",
     mediaType: "IMAGE",
@@ -33,7 +32,7 @@ const featuredMedia = [
   },
   {
     id: "featured-collection",
-    url: arivuamudhuBook,
+    url: "/Arivuamudhu_book.optimized.jpg",
     title: "Arivuamudhu Collection",
     category: "Books",
     mediaType: "IMAGE",
@@ -285,44 +284,48 @@ const GalleryCard = ({ item, index, isAdmin, deleting, onOpen, onDelete }) => (
     <button
       type="button"
       onClick={onOpen}
-      className="relative block h-96 w-full overflow-hidden text-left"
+      className="block w-full text-left focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-inset focus-visible:ring-brand-teal-500"
       aria-label={`Open ${item.mediaType === "VIDEO" ? "video" : "image"}: ${item.title}`}
     >
-      {item.mediaType === "VIDEO" ? (
-        <video
-          src={item.url}
-          muted
-          playsInline
-          preload="metadata"
-          className="h-full w-full bg-black object-cover transition duration-700 group-hover:scale-105"
-        />
-      ) : (
-        <img
-          src={item.url}
-          alt={item.title}
-          loading="lazy"
-          className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
-        />
-      )}
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#f6f2eb] p-3 sm:p-4">
+        {item.mediaType === "VIDEO" ? (
+          <video
+            src={item.url}
+            muted
+            playsInline
+            preload="metadata"
+            className="h-full w-full rounded-2xl bg-slate-900 object-contain"
+          />
+        ) : (
+          <img
+            src={item.url}
+            alt={item.title}
+            loading="lazy"
+            className="h-full w-full rounded-2xl object-contain transition-transform duration-500 group-hover:scale-[1.02]"
+          />
+        )}
 
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
-      <div className="absolute left-5 top-5 rounded-full bg-white/90 px-4 py-2 text-sm font-black text-brand-purple-700 shadow-lg">
-        {item.category || "Memories"}
+        <div className="absolute left-6 top-6 max-w-[calc(100%-3rem)] truncate rounded-full bg-white/95 px-4 py-2 text-xs font-black text-brand-purple-700 shadow-md sm:left-7 sm:top-7">
+          {item.category || "Memories"}
+        </div>
+
+        {item.mediaType === "VIDEO" && (
+          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/95 text-brand-purple-600 shadow-xl transition group-hover:scale-110 sm:h-16 sm:w-16">
+              <Play size={26} fill="currentColor" />
+            </span>
+          </div>
+        )}
       </div>
 
-      {item.mediaType === "VIDEO" && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-white/90 text-brand-purple-600 shadow-2xl transition group-hover:scale-110">
-            <Play size={28} fill="currentColor" />
-          </span>
+      <div className="flex min-h-24 items-center justify-between gap-4 px-5 py-4 sm:px-6">
+        <div className="min-w-0">
+          <h2 className="truncate text-lg font-black text-brand-purple-950 sm:text-xl">{item.title}</h2>
+          <p className="mt-1 text-sm font-semibold text-slate-500">
+            {item.mediaType === "VIDEO" ? "Play video" : "View image"}
+          </p>
         </div>
-      )}
-
-      <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-        <h2 className="text-2xl font-black">{item.title}</h2>
-        <p className="mt-1 font-semibold text-white/80">
-          {item.mediaType === "VIDEO" ? "Play video" : "View image"}
-        </p>
+        <span className="shrink-0 text-sm font-black text-brand-teal-700" aria-hidden="true">→</span>
       </div>
     </button>
 
@@ -348,6 +351,7 @@ const Gallery = () => {
   const { user } = useContext(AuthContext);
   const isAdmin = Boolean(user?.isAdmin);
   const [filter, setFilter] = useState("ALL");
+  const [categoryFilter, setCategoryFilter] = useState("ALL");
   const [refreshKey, setRefreshKey] = useState(0);
   const [galleryState, setGalleryState] = useState({
     requestKey: -1,
@@ -362,12 +366,20 @@ const Gallery = () => {
     () => [...(loading ? [] : galleryState.media), ...featuredMedia],
     [galleryState.media, loading]
   );
+  const categories = useMemo(
+    () => [...new Set(allMedia.map((item) => String(item.category || "Memories").trim()).filter(Boolean))]
+      .sort((a, b) => a.localeCompare(b)),
+    [allMedia]
+  );
   const filteredMedia = useMemo(
     () =>
-      filter === "ALL"
-        ? allMedia
-        : allMedia.filter((item) => item.mediaType === filter),
-    [allMedia, filter]
+      allMedia.filter((item) => {
+        const matchesType = filter === "ALL" || item.mediaType === filter;
+        const itemCategory = String(item.category || "Memories").trim();
+        const matchesCategory = categoryFilter === "ALL" || itemCategory === categoryFilter;
+        return matchesType && matchesCategory;
+      }),
+    [allMedia, categoryFilter, filter]
   );
   const selectedMedia =
     currentIndex === null ? null : filteredMedia[currentIndex] || null;
@@ -432,6 +444,11 @@ const Gallery = () => {
     setFilter(nextFilter);
   };
 
+  const chooseCategory = (nextCategory) => {
+    setCurrentIndex(null);
+    setCategoryFilter(nextCategory);
+  };
+
   const nextMedia = () => {
     setCurrentIndex((index) => (index + 1) % filteredMedia.length);
   };
@@ -448,6 +465,7 @@ const Gallery = () => {
       media: [media, ...state.media],
     }));
     setFilter("ALL");
+    setCategoryFilter("ALL");
   };
 
   const removeMedia = async (media) => {
@@ -465,6 +483,7 @@ const Gallery = () => {
         media: state.media.filter((item) => item.id !== media.id),
       }));
       setCurrentIndex(null);
+      setCategoryFilter("ALL");
       toast.success("Gallery media deleted.");
     } catch (error) {
       toast.error(getErrorMessage(error));
@@ -474,40 +493,19 @@ const Gallery = () => {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-brand-purple-50 via-brand-gold-50 to-brand-teal-50">
+    <div className="min-h-screen bg-[#f8f6f0]">
       <Navbar />
 
-      <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
-        <div className="absolute left-10 top-20 animate-bounce text-6xl opacity-20">🌈</div>
-        <div className="absolute right-20 top-40 animate-pulse text-5xl opacity-20">⭐</div>
-        <div className="absolute bottom-20 left-20 animate-bounce text-5xl opacity-20">📚</div>
-        <div className="absolute bottom-32 right-16 animate-pulse text-6xl opacity-20">🎈</div>
-      </div>
+      <main className="relative z-10 pb-20">
+        <PageIntro
+          icon={ImageIcon}
+          eyebrow="PAACHCHARAM MEMORIES"
+          title="A little Tamil."
+          highlight="A lot of wonder."
+          description="Browse the books, events, and reading moments shared with Kuviyam Publications."
+        />
 
-      <main className="relative z-10 px-5 pb-20 pt-20">
-        <div className="mx-auto max-w-7xl">
-          <motion.header
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7 }}
-            className="text-center"
-          >
-            <div className="inline-flex items-center gap-3 rounded-full border border-white bg-white/80 px-6 py-3 shadow-xl backdrop-blur-md">
-              <ImageIcon size={22} className="text-brand-purple-600" />
-              <span className="text-lg font-black text-brand-purple-600">
-                Paachcharam Memories
-              </span>
-            </div>
-            <h1 className="mt-8 text-5xl font-black leading-tight text-gray-900 md:text-7xl">
-              Magical
-              <span className="block bg-gradient-to-r from-brand-purple-500 via-pink-500 to-brand-teal-500 bg-clip-text text-transparent">
-                Gallery
-              </span>
-            </h1>
-            <p className="mx-auto mt-6 max-w-3xl text-lg leading-8 text-gray-600 md:text-xl">
-              Explore joyful reading, learning, event, and book memories through photos and videos.
-            </p>
-          </motion.header>
+        <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-10">
 
           {isAdmin && <AdminUploadPanel onUploaded={addUploadedMedia} />}
 
@@ -518,11 +516,13 @@ const Gallery = () => {
                   Gallery moments
                 </h2>
                 <p className="mt-2 text-gray-600">
-                  {allMedia.length} {allMedia.length === 1 ? "memory" : "memories"} to explore
+                  {loading
+                    ? "Loading gallery memories…"
+                    : `Showing ${filteredMedia.length} of ${allMedia.length} ${allMedia.length === 1 ? "memory" : "memories"}`}
                 </p>
               </div>
 
-              <div className="flex flex-wrap gap-2" aria-label="Filter gallery media">
+              <div className="flex flex-wrap gap-2" role="group" aria-label="Filter gallery media by type">
                 {filters.map((item) => {
                   const Icon = item.icon;
                   const active = filter === item.key;
@@ -531,6 +531,7 @@ const Gallery = () => {
                     <button
                       type="button"
                       key={item.key}
+                      aria-pressed={active}
                       onClick={() => chooseFilter(item.key)}
                       className={`inline-flex items-center gap-2 rounded-full px-4 py-2 font-black transition ${
                         active
@@ -545,6 +546,46 @@ const Gallery = () => {
                 })}
               </div>
             </div>
+
+            {!loading && !galleryState.error && categories.length > 0 && (
+              <div className="mb-6 flex gap-2 overflow-x-auto pb-2" role="group" aria-label="Filter gallery media by category">
+                <button
+                  type="button"
+                  aria-pressed={categoryFilter === "ALL"}
+                  onClick={() => chooseCategory("ALL")}
+                  className={`inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple-500 focus-visible:ring-offset-2 ${
+                    categoryFilter === "ALL"
+                      ? "border-brand-purple-600 bg-brand-purple-600 text-white shadow-md"
+                      : "border-brand-lavender-200 bg-white text-gray-700 hover:border-brand-purple-300 hover:bg-brand-purple-50"
+                  }`}
+                >
+                  All memories
+                  <span className={categoryFilter === "ALL" ? "text-white/75" : "text-gray-400"}>{allMedia.length}</span>
+                </button>
+                {categories.map((categoryName) => {
+                  const count = allMedia.filter(
+                    (item) => String(item.category || "Memories").trim() === categoryName
+                  ).length;
+                  const active = categoryFilter === categoryName;
+                  return (
+                    <button
+                      key={categoryName}
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => chooseCategory(categoryName)}
+                      className={`inline-flex min-h-10 shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple-500 focus-visible:ring-offset-2 ${
+                        active
+                          ? "border-brand-purple-600 bg-brand-purple-600 text-white shadow-md"
+                          : "border-brand-lavender-200 bg-white text-gray-700 hover:border-brand-purple-300 hover:bg-brand-purple-50"
+                      }`}
+                    >
+                      {categoryName}
+                      <span className={active ? "text-white/75" : "text-gray-400"}>{count}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
 
             {loading ? (
               <GallerySkeleton />
@@ -564,11 +605,13 @@ const Gallery = () => {
             ) : filteredMedia.length === 0 ? (
               <div className="rounded-[32px] border-2 border-dashed border-brand-lavender-300 bg-white/70 px-6 py-16 text-center">
                 <Film size={44} className="mx-auto text-brand-purple-400" />
-                <h3 className="mt-4 text-2xl font-black text-gray-900">No videos yet</h3>
+                <h3 className="mt-4 text-2xl font-black text-gray-900">
+                  {filter === "VIDEO" ? "No videos here yet" : filter === "IMAGE" ? "No images here yet" : "No memories found"}
+                </h3>
                 <p className="mt-2 text-gray-600">
                   {isAdmin
-                    ? "Use the upload panel above to add the first one."
-                    : "New gallery videos will appear here soon."}
+                    ? "Try another category or upload media to this one."
+                    : "Try a different category or media type to see more memories."}
                 </p>
               </div>
             ) : (

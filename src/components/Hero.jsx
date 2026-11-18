@@ -1,268 +1,98 @@
 import { motion } from "framer-motion";
+import { ArrowRight, BookOpen, Sparkles } from "lucide-react";
+import { Link } from "react-router-dom";
 
-import {
-  Sparkles,
-  Star,
-  BookOpen,
-  ArrowRight,
-} from "lucide-react";
+const Hero = () => (
+  <section className="relative isolate overflow-hidden bg-[#f8f6f0] text-slate-900">
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute -right-28 -top-32 h-[28rem] w-[28rem] rounded-full bg-brand-gold-200/50 blur-3xl"
+    />
+    <div
+      aria-hidden="true"
+      className="pointer-events-none absolute -bottom-48 -left-24 h-[26rem] w-[26rem] rounded-full bg-brand-purple-100/70 blur-3xl"
+    />
 
-import {
-  Link,
-} from "react-router-dom";
-
-import inithinithu from "../assets/inithuinithu_book.jpeg";
-
-
-const Hero = () => {
-
-  return (
-
-    <section className="relative overflow-hidden bg-gradient-to-br from-brand-purple-100 via-brand-gold-50 to-brand-teal-100 min-h-[88vh] flex items-center">
-
-      {/* FLOATING ELEMENTS */}
-
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-
-        <div className="absolute top-10 left-10 text-3xl opacity-30 animate-pulse">
-          ☁️
+    <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-5 py-16 sm:px-8 md:py-20 lg:min-h-[640px] lg:grid-cols-[1.05fr_.95fr] lg:gap-16 lg:px-10 lg:py-24">
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.55 }}
+        className="max-w-2xl"
+      >
+        <div className="inline-flex items-center gap-2 rounded-full border border-brand-purple-200 bg-white/80 px-4 py-2 text-sm font-semibold text-brand-purple-800 shadow-sm">
+          <Sparkles size={16} aria-hidden="true" />
+          Kuviyam Publications · Paachcharam
         </div>
 
-        <div className="absolute top-24 right-10 text-4xl opacity-40 animate-bounce">
-          🌈
+        <h1 className="mt-7 text-4xl font-semibold leading-[1.12] tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
+          Tamil stories for
+          <span className="block font-serif italic text-brand-purple-700">
+            little minds.
+          </span>
+        </h1>
+
+        <p className="mt-6 max-w-xl text-base leading-7 text-slate-600 sm:text-lg sm:leading-8">
+          Explore rhymes, stories and early learning books that bring Tamil into a
+          child’s everyday reading.
+        </p>
+
+        <div className="mt-8 flex flex-wrap gap-3 text-sm font-medium text-slate-700">
+          <span className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2.5 shadow-sm">
+            <BookOpen size={16} className="text-brand-purple-700" aria-hidden="true" />
+            Rhymes and stories
+          </span>
+          <span className="rounded-full bg-white px-4 py-2.5 shadow-sm">Tamil learning</span>
+          <span className="rounded-full bg-white px-4 py-2.5 shadow-sm">Books for young readers</span>
         </div>
 
-        <div className="absolute bottom-10 left-10 text-4xl opacity-30 animate-bounce">
-          🧸
-        </div>
-
-        <div className="absolute bottom-10 right-16 text-4xl opacity-30 animate-pulse">
-          🚀
-        </div>
-
-        <div className="absolute top-1/2 left-1/3 text-3xl opacity-20 animate-spin">
-          ⭐
-        </div>
-
-      </div>
-
-      {/* CONTAINER */}
-
-      <div className="container-custom relative z-10 py-10">
-
-        <div className="grid lg:grid-cols-2 gap-8 lg:gap-10 items-center">
-
-          {/* LEFT CONTENT */}
-
-          <motion.div
-
-            initial={{
-              opacity: 0,
-            }}
-
-            animate={{
-              opacity: 1,
-            }}
-
-            transition={{
-              duration: 0.8,
-            }}
-
-            className="text-center lg:text-left"
+        <div className="mt-9 flex flex-wrap items-center gap-4">
+          <Link
+            to="/shop"
+            className="group inline-flex min-h-12 items-center justify-center gap-3 rounded-xl bg-brand-purple-800 px-6 py-3 text-base font-semibold text-white shadow-lg shadow-brand-purple-900/15 transition hover:-translate-y-0.5 hover:bg-brand-purple-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-purple-800"
           >
-
-            {/* BADGE */}
-
-            <div className="inline-flex items-center gap-2 bg-white/90 px-5 py-3 rounded-full border-2 border-brand-purple-300 shadow-lg mb-8">
-
-              <Sparkles
-                size={20}
-                className="text-brand-purple-500"
-              />
-
-              <span className="font-black text-brand-purple-500 text-sm md:text-base">
-
-                Fun Tamil Learning For Kids
-
-              </span>
-
-            </div>
-
-            {/* HEADING */}
-
-            <h1 className="text-3xl md:text-4xl xl:text-5xl font-black leading-tight">
-
-              <span className="text-gray-800">
-
-                Learn Tamil
-
-              </span>
-
-              <span className="block text-brand-purple-500 mt-2">
-
-                Through Fun
-
-              </span>
-
-              <span className="block text-brand-gold-500 mt-2">
-
-                Stories & Rhymes 🌈
-
-              </span>
-
-            </h1>
-
-            {/* DESCRIPTION */}
-
-            <p className="mt-6 md:mt-8 text-base md:text-lg text-gray-700 leading-8 max-w-2xl mx-auto lg:mx-0">
-
-              Discover colorful Tamil learning books,
-              interactive rhymes, playful stories,
-              and joyful educational experiences
-              specially crafted for curious little minds.
-
-            </p>
-
-            {/* FEATURES */}
-
-            <div className="flex flex-wrap justify-center lg:justify-start gap-4 mt-8">
-
-              <div className="flex items-center gap-2 bg-white px-5 py-3 rounded-2xl shadow-md">
-
-                <BookOpen
-                  className="text-brand-teal-500"
-                  size={22}
-                />
-
-                <span className="font-bold text-gray-700">
-
-                  Interactive Books
-
-                </span>
-
-              </div>
-
-              <div className="flex items-center gap-2 bg-white px-5 py-3 rounded-2xl shadow-md">
-
-                <Star
-                  className="text-brand-gold-500"
-                  size={22}
-                />
-
-                <span className="font-bold text-gray-700">
-
-                  Kids Friendly
-
-                </span>
-
-              </div>
-
-            </div>
-
-            {/* BUTTONS */}
-
-            <div className="flex flex-wrap justify-center lg:justify-start gap-5 mt-8">
-
-              <Link to="/shop">
-
-                <button className="group bg-gradient-to-r from-brand-purple-500 to-brand-gold-400 hover:from-brand-purple-600 hover:to-brand-gold-500 text-white px-8 py-4 rounded-full text-lg font-black shadow-2xl hover:scale-105 transition duration-300 flex items-center gap-3">
-
-                  📚 Shop Now
-
-                  <ArrowRight
-                    size={22}
-                    className="group-hover:translate-x-1 transition"
-                  />
-
-                </button>
-
-              </Link>
-
-              <Link to="/about">
-
-                <button className="bg-white border-4 border-brand-gold-300 text-gray-800 px-8 py-4 rounded-full text-lg font-black shadow-xl hover:scale-105 transition duration-300">
-
-                  🎈 Explore More
-
-                </button>
-
-              </Link>
-
-            </div>
-
-          </motion.div>
-
-          {/* RIGHT IMAGE */}
-
-          <motion.div
-
-            initial={{
-              opacity: 0,
-            }}
-
-            animate={{
-              opacity: 1,
-            }}
-
-            transition={{
-              duration: 0.8,
-            }}
-
-            className="relative flex justify-center lg:justify-end"
+            Explore the books
+            <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" aria-hidden="true" />
+          </Link>
+          <Link
+            to="/about"
+            className="inline-flex min-h-12 items-center rounded-xl px-4 py-3 font-semibold text-slate-700 underline decoration-brand-gold-500 decoration-2 underline-offset-4 transition hover:text-brand-purple-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-purple-800"
           >
-
-            {/* GLOW */}
-
-            <div className="absolute w-[300px] h-[300px] sm:w-[420px] sm:h-[420px] md:w-[520px] md:h-[520px] bg-brand-gold-300 rounded-full blur-3xl opacity-30 animate-pulse"></div>
-
-            {/* STICKERS */}
-
-            <div className="absolute -top-6 left-4 text-5xl animate-bounce">
-              🎨
-            </div>
-
-            <div className="absolute bottom-6 -right-2 text-5xl animate-pulse">
-              📖
-            </div>
-
-            {/* IMAGE */}
-
-            <motion.div
-
-              whileHover={{
-                scale: 1.03,
-                rotate: -1,
-              }}
-
-              transition={{
-                duration: 0.3,
-              }}
-
-              className="relative z-10"
-            >
-
-              <div className="bg-white p-5 rounded-[28px] shadow-2xl border-4 border-white">
-
-                <img
-                  src={inithinithu}
-                  alt="Tamil Learning Book"
-                  className="w-full max-w-[360px] md:max-w-[560px] xl:max-w-[640px] rounded-[24px] object-cover"
-                />
-
-              </div>
-
-            </motion.div>
-
-          </motion.div>
-
+            About the publisher
+          </Link>
         </div>
+      </motion.div>
 
-      </div>
-
-    </section>
-
-  );
-
-};
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.65, delay: 0.08 }}
+        className="relative mx-auto w-full max-w-[440px] lg:ml-auto"
+      >
+        <div className="absolute -inset-5 -rotate-3 rounded-[2rem] bg-brand-gold-200/70" aria-hidden="true" />
+        <div className="relative overflow-hidden rounded-[1.75rem] border border-white bg-white p-3 shadow-[0_28px_80px_rgba(45,31,62,0.16)] sm:p-4">
+          <img
+            src="/inithuinithu_book.optimized.jpg"
+            alt="Cover of Inithinithu, a Tamil rhymes book for young readers"
+            className="aspect-[4/5] w-full rounded-[1.25rem] bg-[#f6f1e7] object-contain p-2"
+            decoding="async"
+            fetchPriority="high"
+          />
+          <div className="flex items-center justify-between gap-4 px-2 py-4 sm:px-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-purple-700">
+                Paachcharam collection
+              </p>
+              <p className="mt-1 text-lg font-semibold text-slate-900">Inithinithu</p>
+            </div>
+            <span className="rounded-full bg-brand-purple-50 px-3 py-1.5 text-sm font-semibold text-brand-purple-800">
+              Tamil rhymes
+            </span>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  </section>
+);
 
 export default Hero;

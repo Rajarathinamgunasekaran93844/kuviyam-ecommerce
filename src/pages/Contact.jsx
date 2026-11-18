@@ -1,364 +1,189 @@
 import { useState } from "react";
+import { LoaderCircle, Mail, MapPin, Phone, Send, Sparkles } from "lucide-react";
+import { toast } from "react-toastify";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { Mail, Phone, MapPin, Send, Sparkles } from "lucide-react";
-import { toast } from "react-toastify";
+import PageIntro from "../components/PageIntro";
 import { contactAPI } from "../utils/api";
+
+const contactMethods = [
+  {
+    icon: Mail,
+    label: "Email",
+    value: "support@kuviyampublications.com",
+    href: "mailto:support@kuviyampublications.com",
+  },
+  {
+    icon: Phone,
+    label: "Phone",
+    value: "+91 9600021480",
+    href: "tel:+919600021480",
+  },
+  {
+    icon: MapPin,
+    label: "Location",
+    value: "Tiruchirappalli, Tamil Nadu, India",
+  },
+];
 
 const Contact = () => {
   const [formData, setFormData] = useState({ name: "", email: "", message: "" });
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    setFormData((current) => ({ ...current, [name]: value }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (loading) return;
 
+    setLoading(true);
     try {
       await contactAPI.sendMessage(formData);
-      toast.success("Message sent successfully! ✨");
+      toast.success("Your message was sent successfully.");
       setFormData({ name: "", email: "", message: "" });
     } catch (error) {
-      toast.error(error.response?.data?.message || "Failed to send message");
+      toast.error(error.response?.data?.message || "Your message could not be sent. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-
-    <>
-
+    <div className="min-h-screen bg-[#f8f6f0]">
       <Navbar />
 
-      <section className="relative overflow-hidden min-h-screen py-16 md:py-20 bg-gradient-to-br from-brand-purple-100 via-brand-gold-50 to-brand-teal-100">
+      <main className="pb-20">
+        <PageIntro
+          icon={Sparkles}
+          eyebrow="CONTACT KUVIYAM PUBLICATIONS"
+          title="We’d love to hear"
+          highlight="from you."
+          description="Questions about a book or an order? Get in touch with our team using the details below or send us a note."
+        />
 
-        {/* FLOATING CARTOON ELEMENTS */}
+        <section className="mx-auto grid max-w-7xl gap-6 px-5 sm:px-8 lg:grid-cols-[.9fr_1.1fr] lg:gap-8 lg:px-10" aria-label="Contact Kuviyam Publications">
+          <aside className="relative isolate overflow-hidden rounded-[28px] bg-brand-purple-900 p-6 text-white shadow-xl sm:p-8 lg:p-10">
+            <div aria-hidden="true" className="absolute -right-20 -top-20 -z-10 h-64 w-64 rounded-full bg-brand-purple-500/40 blur-3xl" />
+            <div aria-hidden="true" className="absolute -bottom-24 -left-20 -z-10 h-64 w-64 rounded-full bg-brand-teal-500/25 blur-3xl" />
 
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-
-          <div className="absolute top-10 left-10 text-6xl animate-bounce">
-            ☁️
-          </div>
-
-          <div className="absolute top-20 right-16 text-5xl animate-pulse">
-            🌈
-          </div>
-
-          <div className="absolute bottom-10 left-20 text-5xl animate-bounce">
-            🧸
-          </div>
-
-          <div className="absolute bottom-16 right-10 text-5xl animate-pulse">
-            🚀
-          </div>
-
-          <div className="absolute top-1/2 left-1/3 text-4xl animate-spin">
-            ⭐
-          </div>
-
-          <div className="absolute top-1/3 right-1/4 text-5xl animate-bounce">
-            🎈
-          </div>
-
-        </div>
-
-        <div className="container-custom relative z-10">
-
-          {/* HEADER */}
-
-          <div className="text-center mb-12 md:mb-16">
-
-            {/* BADGE */}
-
-            <div className="inline-flex items-center gap-2 bg-white px-6 py-3 rounded-full shadow-lg border-2 border-brand-purple-300 mb-8">
-
-              <Sparkles
-                className="text-brand-purple-500"
-                size={20}
-              />
-
-              <span className="font-bold text-brand-purple-500 tracking-wide">
-
-                Contact Kuviyam Publications
-
-              </span>
-
-            </div>
-
-            {/* TITLE */}
-
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black leading-tight">
-
-              <span className="text-gray-800">
-
-                Let's Connect
-              </span>
-
-              <span className="block text-brand-purple-500 mt-3">
-
-                With Happy Learning 🌈
-              </span>
-
-            </h1>
-
-            {/* DESCRIPTION */}
-
-            <p className="text-gray-700 text-lg md:text-xl mt-8 max-w-4xl mx-auto leading-8 md:leading-9">
-
-              We would love to hear from you. Reach out to
-              Kuviyam Publications for Tamil learning books,
-              support, collaborations, and fun educational experiences.
-
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand-gold-300">Say hello</p>
+            <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Talk with our team</h2>
+            <p className="mt-4 max-w-md leading-7 text-white/75">
+              We’re happy to help with questions about our Tamil books, your order, or working with Kuviyam Publications.
             </p>
 
-          </div>
-
-          {/* CONTACT GRID */}
-
-          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
-
-            {/* LEFT SIDE */}
-
-            <div className="relative bg-white/90 backdrop-blur-md rounded-[24px] shadow-2xl p-6 md:p-8 lg:p-10 overflow-hidden border-4 border-white">
-
-              {/* BACKGROUND DECORATION */}
-
-              <div className="absolute -top-20 -right-20 w-64 h-64 bg-brand-purple-300 rounded-full opacity-20"></div>
-
-              <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-brand-gold-300 rounded-full opacity-20"></div>
-
-              <div className="relative z-10">
-
-                <h2 className="text-3xl font-black text-gray-800 mb-8">
-
-                  📞 Contact Information
-
-                </h2>
-
-                <div className="space-y-6">
-
-                  {/* EMAIL */}
-
-                  <div className="flex items-start gap-4 bg-brand-purple-50 rounded-[20px] p-5 hover:-translate-y-2 transition duration-300 shadow-md">
-
-                    <div className="w-14 h-14 rounded-2xl bg-brand-purple-400 flex items-center justify-center flex-shrink-0 shadow-lg">
-
-                      <Mail
-                        className="text-white"
-                        size={26}
-                      />
-
-                    </div>
-
-                    <div className="min-w-0">
-
-                      <h3 className="text-xl font-black text-gray-800">
-
-                        Email
-
-                      </h3>
-
-                      <p className="text-gray-700 mt-2 text-base md:text-lg break-words leading-8">
-
-                        support@kuviyampublications.com
-
-                      </p>
-
-                    </div>
-
-                  </div>
-
-                  {/* PHONE */}
-
-                  <div className="flex items-start gap-4 bg-brand-gold-50 rounded-[20px] p-5 hover:-translate-y-2 transition duration-300 shadow-md">
-
-                    <div className="w-14 h-14 rounded-2xl bg-brand-gold-400 flex items-center justify-center flex-shrink-0 shadow-lg">
-
-                      <Phone
-                        className="text-white"
-                        size={26}
-                      />
-
-                    </div>
-
-                    <div>
-
-                      <h3 className="text-xl font-black text-gray-800">
-
-                        Phone
-
-                      </h3>
-
-                      <p className="text-gray-700 mt-2 text-base md:text-lg">
-
-                        +91 9600021480
-
-                      </p>
-
-                    </div>
-
-                  </div>
-
-                  {/* LOCATION */}
-
-                  <div className="flex items-start gap-4 bg-brand-teal-50 rounded-[20px] p-5 hover:-translate-y-2 transition duration-300 shadow-md">
-
-                    <div className="w-14 h-14 rounded-2xl bg-brand-teal-400 flex items-center justify-center flex-shrink-0 shadow-lg">
-
-                      <MapPin
-                        className="text-white"
-                        size={26}
-                      />
-
-                    </div>
-
-                    <div>
-
-                      <h3 className="text-xl font-black text-gray-800">
-
-                        Location
-
-                      </h3>
-
-                      <p className="text-gray-700 mt-2 text-base md:text-lg leading-8">
-
-                        Tiruchirappalli, Tamil Nadu, India
-
-                      </p>
-
-                    </div>
-
-                  </div>
-
-                </div>
-
-              </div>
-
-            </div>
-
-            {/* RIGHT SIDE FORM */}
-
-            <div className="relative bg-white/90 backdrop-blur-md rounded-[24px] shadow-2xl p-6 md:p-8 lg:p-10 overflow-hidden border-4 border-white">
-
-              {/* DECORATION */}
-
-              <div className="absolute -top-20 -right-20 w-64 h-64 bg-brand-teal-300 rounded-full opacity-20"></div>
-
-              <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-brand-purple-300 rounded-full opacity-20"></div>
-
-              <div className="relative z-10">
-
-                <h2 className="text-3xl font-black text-gray-800 mb-8">
-
-                  ✉️ Send Message
-
-                </h2>
-
-                <form onSubmit={handleSubmit} className="space-y-6">
-
-                  {/* NAME */}
-
-                  <div>
-
-                    <label className="block text-gray-800 font-bold mb-3 text-lg">
-
-                      Full Name
-
-                    </label>
-
-                    <input
-                      type="text"
-                      name="name"
-                      placeholder="Enter your name"
-                      value={formData.name}
-                      onChange={handleChange}
-                      required
-                      className="w-full bg-brand-purple-50 border-2 border-transparent rounded-2xl px-5 py-4 text-base md:text-lg outline-none focus:border-brand-purple-400 transition duration-300"
-                    />
-
-                  </div>
-
-                  {/* EMAIL */}
-
-                  <div>
-
-                    <label className="block text-gray-800 font-bold mb-3 text-lg">
-
-                      Email Address
-
-                    </label>
-
-                    <input
-                      type="email"
-                      name="email"
-                      placeholder="Enter your email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      required
-                      className="w-full bg-brand-gold-50 border-2 border-transparent rounded-2xl px-5 py-4 text-base md:text-lg outline-none focus:border-brand-gold-400 transition duration-300"
-                    />
-
-                  </div>
-
-                  {/* MESSAGE */}
-
-                  <div>
-
-                    <label className="block text-gray-800 font-bold mb-3 text-lg">
-
-                      Message
-
-                    </label>
-
-                    <textarea
-                      name="message"
-                      rows="6"
-                      placeholder="Write your message"
-                      value={formData.message}
-                      onChange={handleChange}
-                      required
-                      className="w-full bg-brand-teal-50 border-2 border-transparent rounded-2xl px-5 py-4 text-base md:text-lg outline-none focus:border-brand-teal-400 transition duration-300 resize-none"
-                    ></textarea>
-
-                  </div>
-
-                  {/* BUTTON */}
-
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className="group bg-gradient-to-r from-brand-purple-500 to-brand-gold-400 hover:from-brand-purple-600 hover:to-brand-gold-500 text-white px-8 py-4 rounded-full font-black flex items-center gap-3 transition duration-300 text-lg shadow-2xl hover:scale-105"
+            <div className="mt-8 space-y-3">
+              {contactMethods.map(({ icon: Icon, label, value, href }) => {
+                const Content = (
+                  <>
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/10 text-brand-gold-200">
+                      <Icon size={19} aria-hidden="true" />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-xs font-semibold uppercase tracking-[0.12em] text-white/55">{label}</span>
+                      <span className="mt-1 block break-words font-semibold text-white">{value}</span>
+                    </span>
+                  </>
+                );
+
+                return href ? (
+                  <a
+                    key={label}
+                    href={href}
+                    className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.06] p-4 transition hover:border-white/20 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
                   >
+                    {Content}
+                  </a>
+                ) : (
+                  <div key={label} className="flex items-center gap-4 rounded-2xl border border-white/10 bg-white/[0.06] p-4">
+                    {Content}
+                  </div>
+                );
+              })}
+            </div>
+          </aside>
 
-                    <Send
-                      size={24}
-                      className="group-hover:translate-x-1 transition duration-300"
-                    />
-
-                    Send Message 🚀
-
-                  </button>
-
-                </form>
-
+          <section className="rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm sm:p-8 lg:p-10" aria-labelledby="contact-form-title">
+            <div className="flex items-start gap-4">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-brand-teal-50 text-brand-teal-800">
+                <Mail size={22} aria-hidden="true" />
+              </span>
+              <div>
+                <h2 id="contact-form-title" className="text-2xl font-semibold text-slate-950 sm:text-3xl">Send us a message</h2>
+                <p className="mt-2 leading-7 text-slate-600">Fill in the form and our team will receive your message.</p>
               </div>
-
             </div>
 
-          </div>
+            <form onSubmit={handleSubmit} aria-busy={loading} className="mt-7 space-y-5">
+              <div>
+                <label htmlFor="contact-name" className="mb-2 block text-sm font-semibold text-slate-800">Full name</label>
+                <input
+                  id="contact-name"
+                  type="text"
+                  name="name"
+                  autoComplete="name"
+                  maxLength={120}
+                  placeholder="Your name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                  disabled={loading}
+                  className="min-h-12 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-purple-700 focus:ring-2 focus:ring-brand-purple-100 disabled:bg-slate-50"
+                />
+              </div>
 
-        </div>
+              <div>
+                <label htmlFor="contact-email" className="mb-2 block text-sm font-semibold text-slate-800">Email address</label>
+                <input
+                  id="contact-email"
+                  type="email"
+                  name="email"
+                  autoComplete="email"
+                  maxLength={254}
+                  placeholder="you@example.com"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  disabled={loading}
+                  className="min-h-12 w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-purple-700 focus:ring-2 focus:ring-brand-purple-100 disabled:bg-slate-50"
+                />
+              </div>
 
-      </section>
+              <div>
+                <label htmlFor="contact-message" className="mb-2 block text-sm font-semibold text-slate-800">Message</label>
+                <textarea
+                  id="contact-message"
+                  name="message"
+                  rows={5}
+                  maxLength={2000}
+                  placeholder="How can we help?"
+                  value={formData.message}
+                  onChange={handleChange}
+                  required
+                  disabled={loading}
+                  className="w-full resize-y rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-brand-purple-700 focus:ring-2 focus:ring-brand-purple-100 disabled:bg-slate-50"
+                />
+                <p className="mt-1 text-right text-xs text-slate-500">{formData.message.length}/2000</p>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand-purple-800 px-5 py-3 font-semibold text-white shadow-sm transition hover:bg-brand-purple-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-purple-800 disabled:cursor-wait disabled:opacity-70 sm:w-auto"
+              >
+                {loading ? <LoaderCircle size={18} className="animate-spin" aria-hidden="true" /> : <Send size={18} aria-hidden="true" />}
+                {loading ? "Sending…" : "Send message"}
+              </button>
+            </form>
+          </section>
+        </section>
+      </main>
 
       <Footer />
-
-    </>
-
+    </div>
   );
 };
 

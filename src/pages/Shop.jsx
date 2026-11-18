@@ -1,339 +1,308 @@
-import {
-  useState,
-  useEffect,
-} from "react";
-
-import {
-  Search,
-  Sparkles,
-  BookOpen,
-  Star,
-  Rocket,
-} from "lucide-react";
-
+import { useEffect, useMemo, useState } from "react";
+import { ArrowDownUp, BookOpen, LayoutGrid, List, Search, X } from "lucide-react";
+import { Link, useSearchParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import ProductCard from "../components/ProductCard";
 import ProductSkeleton from "../components/ProductSkeleton";
-
 import { productAPI } from "../utils/api";
+
+const PAGE_SIZE = 9;
+
+const sortProducts = (products, sortBy) => {
+  const sorted = [...products];
+
+  if (sortBy === "price-low") {
+    sorted.sort((a, b) => Number(a.price || 0) - Number(b.price || 0));
+  } else if (sortBy === "price-high") {
+    sorted.sort((a, b) => Number(b.price || 0) - Number(a.price || 0));
+  } else if (sortBy === "title") {
+    sorted.sort((a, b) => String(a.title || "").localeCompare(String(b.title || "")));
+  } else if (sortBy === "newest") {
+    sorted.sort((a, b) => {
+      const dateDifference = new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+      return Number.isNaN(dateDifference) || dateDifference === 0
+        ? Number(b.id || 0) - Number(a.id || 0)
+        : dateDifference;
+    });
+  }
+
+  return sorted;
+};
 
 const Shop = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [search, setSearch] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
+  const [layout, setLayout] = useState("grid");
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [retryCount, setRetryCount] = useState(0);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const category = searchParams.get("category") || "";
 
-  // Fetch products
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const response = await productAPI.getProducts({ search });
-        setProducts(response.data.products || response.data.data || []);
-      } catch (error) {
-        console.error("Failed to fetch products:", error);
-      } finally {
-        setLoading(false);
-      }
+    let active = true;
+
+    productAPI
+      .getProducts()
+      .then((response) => {
+        const data = response.data.products || response.data.data || [];
+        if (!Array.isArray(data)) throw new Error("Unexpected product response.");
+        if (active) {
+          setProducts(data);
+          setError(false);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setProducts([]);
+          setError(true);
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
     };
+  }, [retryCount]);
 
-    fetchProducts();
-  }, [search]);
+  const categories = useMemo(() => {
+    const counts = new Map();
+    products.forEach((product) => {
+      const name = String(product.category || "").trim();
+      if (name) counts.set(name, (counts.get(name) || 0) + 1);
+    });
 
-  const filteredProducts = products;
+    return [...counts.entries()]
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [products]);
+
+  const filteredProducts = useMemo(() => {
+    const searchTerm = search.trim().toLocaleLowerCase();
+
+    return products.filter((product) => {
+      const matchesCategory = !category || product.category === category;
+      const searchableText = [product.title, product.category, product.description]
+        .filter(Boolean)
+        .join(" ")
+        .toLocaleLowerCase();
+      return matchesCategory && (!searchTerm || searchableText.includes(searchTerm));
+    });
+  }, [category, products, search]);
+
+  const sortedProducts = useMemo(
+    () => sortProducts(filteredProducts, sortBy),
+    [filteredProducts, sortBy]
+  );
+
+  const visibleProducts = sortedProducts.slice(0, visibleCount);
+
+  const chooseCategory = (nextCategory) => {
+    setVisibleCount(PAGE_SIZE);
+    const nextParams = new URLSearchParams(searchParams);
+    if (nextCategory) nextParams.set("category", nextCategory);
+    else nextParams.delete("category");
+    setSearchParams(nextParams);
+  };
 
   return (
-
     <>
-
       <Navbar />
-
-      <section className="relative overflow-hidden min-h-screen py-16 md:py-20 bg-gradient-to-br from-brand-purple-100 via-brand-gold-50 to-brand-teal-100">
-
-        {/* OVERLAY */}
-
-        <div className="absolute inset-0 bg-gradient-to-b from-white/20 via-transparent to-white/20"></div>
-
-        {/* FLOATING ELEMENTS */}
-
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-
-          <div className="absolute top-10 left-10 text-5xl opacity-20 animate-bounce">
-            ☁️
-          </div>
-
-          <div className="absolute top-20 right-16 text-5xl opacity-20 animate-pulse">
-            🌈
-          </div>
-
-          <div className="absolute bottom-10 left-20 text-5xl opacity-20 animate-bounce">
-            🧸
-          </div>
-
-          <div className="absolute bottom-16 right-10 text-5xl opacity-20 animate-pulse">
-            🚀
-          </div>
-
-          <div className="absolute top-1/2 left-1/4 text-4xl opacity-10 animate-spin">
-            ⭐
-          </div>
-
-          <div className="absolute top-1/3 right-1/4 text-5xl opacity-10 animate-bounce">
-            🎈
-          </div>
-
-        </div>
-
-        {/* MAIN CONTAINER */}
-
-        <div className="container-custom relative z-10">
-
-          {/* HEADER */}
-
-          <div className="text-center max-w-6xl mx-auto mb-12 md:mb-16">
-
-            {/* BADGE */}
-
-            <div className="inline-flex items-center gap-3 bg-white/80 backdrop-blur-md px-8 py-4 rounded-full border-2 border-brand-purple-300 shadow-xl mb-10">
-
-              <Sparkles
-                className="text-brand-purple-500"
-                size={24}
-              />
-
-              <span className="font-black text-brand-purple-500 text-lg tracking-wide">
-
-                Explore Tamil Learning Books
-
-              </span>
-
-            </div>
-
-            {/* TITLE */}
-
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black leading-tight">
-
-              <span className="block text-gray-900">
-
-                Fun Learning
-
-              </span>
-
-              <span className="block text-brand-purple-500 mt-3">
-
-                Book Store 📚
-
-              </span>
-
-            </h1>
-
-            {/* DESCRIPTION */}
-
-            <p className="text-gray-700 text-lg md:text-xl mt-8 max-w-5xl mx-auto leading-8 md:leading-9">
-
-              Discover colorful Tamil books, rhymes,
-              stories, and playful educational materials
-              specially designed for curious little learners.
-
+      <main className="min-h-screen bg-[#f8f6f0] py-12 sm:py-16">
+        <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-10">
+          <header className="mx-auto mb-9 max-w-3xl text-center sm:mb-12">
+            <p className="text-sm font-semibold uppercase tracking-[0.16em] text-brand-purple-800">
+              Paachcharam collection
             </p>
+            <h1 className="mt-3 text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
+              Tamil books for young readers
+            </h1>
+            <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
+              Browse the books available in our catalog, or search by title and description.
+            </p>
+          </header>
 
-            {/* FEATURES */}
-
-            <div className="flex flex-wrap justify-center gap-6 mt-8 md:mt-10">
-
-              <div className="flex items-center gap-3 bg-white px-5 md:px-6 py-3 md:py-4 rounded-2xl shadow-xl hover:scale-105 transition duration-300">
-
-                <BookOpen
-                  className="text-brand-teal-500"
-                  size={24}
-                />
-
-                <span className="font-black text-base md:text-lg text-gray-700">
-
-                  Interactive Stories
-
-                </span>
-
-              </div>
-
-              <div className="flex items-center gap-3 bg-white px-5 md:px-6 py-3 md:py-4 rounded-2xl shadow-xl hover:scale-105 transition duration-300">
-
-                <Star
-                  className="text-brand-gold-500"
-                  size={24}
-                />
-
-                <span className="font-black text-base md:text-lg text-gray-700">
-
-                  Kids Friendly
-
-                </span>
-
-              </div>
-
-              <div className="flex items-center gap-3 bg-white px-5 md:px-6 py-3 md:py-4 rounded-2xl shadow-xl hover:scale-105 transition duration-300">
-
-                <Rocket
-                  className="text-brand-purple-500"
-                  size={24}
-                />
-
-                <span className="font-black text-base md:text-lg text-gray-700">
-
-                  Fun Learning
-
-                </span>
-
-              </div>
-
-            </div>
-
-          </div>
-
-          {/* SEARCH BAR */}
-
-          <div className="flex justify-center mb-12 md:mb-16">
-
-            <div className="relative w-full max-w-3xl">
-
-              {/* SEARCH ICON */}
-
-              <Search
-                className="absolute left-5 md:left-7 top-1/2 -translate-y-1/2 text-brand-purple-400"
-                size={24}
-              />
-
-              {/* INPUT */}
-
+          <div className="mx-auto mb-8 max-w-3xl">
+            <label htmlFor="book-search" className="sr-only">Search books</label>
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} aria-hidden="true" />
               <input
-                type="text"
-                placeholder="Search fun learning books..."
-                className="w-full bg-white/90 backdrop-blur-md border-4 border-white shadow-2xl rounded-full pl-14 md:pl-20 pr-14 md:pr-20 py-4 md:py-5 text-base md:text-lg font-semibold outline-none focus:border-brand-purple-300 transition duration-300"
+                id="book-search"
+                type="search"
+                placeholder="Search books"
                 value={search}
-                onChange={(e) =>
-                  setSearch(
-                    e.target.value
-                  )
-                }
+                onChange={(event) => {
+                  setVisibleCount(PAGE_SIZE);
+                  setSearch(event.target.value);
+                }}
+                className="min-h-14 w-full rounded-2xl border border-slate-300 bg-white py-3 pl-12 pr-4 text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-brand-purple-700 focus:ring-2 focus:ring-brand-purple-200"
               />
-
-              {/* EMOJI */}
-
-              <div className="absolute right-5 md:right-7 top-1/2 -translate-y-1/2 text-2xl md:text-3xl animate-bounce">
-
-                🌈
-
-              </div>
-
             </div>
-
           </div>
 
-          {/* RESULT SECTION */}
+          <section aria-label="Book categories" className="mb-8">
+            <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-600">
+              <BookOpen size={17} className="text-brand-purple-700" aria-hidden="true" />
+              Browse by category
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-2" role="group" aria-label="Filter books by category">
+              {[
+                { name: "", label: "All books", count: products.length },
+                ...categories.map((item) => ({ name: item.name, label: item.name, count: item.count })),
+              ].map((item) => {
+                const selected = category === item.name;
+                return (
+                  <button
+                    key={item.name || "all-books"}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => chooseCategory(item.name)}
+                    className={`inline-flex min-h-11 shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple-500 focus-visible:ring-offset-2 ${
+                      selected
+                        ? "border-brand-purple-800 bg-brand-purple-800 text-white shadow-sm"
+                        : "border-slate-200 bg-white text-slate-700 hover:border-brand-purple-300 hover:bg-brand-purple-50"
+                    }`}
+                  >
+                    {item.label}
+                    <span className={selected ? "text-white/75" : "text-slate-400"}>{item.count}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
 
-          <div className="flex flex-col lg:flex-row items-center justify-between gap-6 mb-16">
-
-            <div className="flex items-center gap-3 bg-white px-5 md:px-6 py-3 md:py-4 rounded-2xl shadow-xl">
-
-              <BookOpen
-                className="text-brand-teal-500"
-                size={28}
-              />
-
-              <span className="font-black text-gray-700 text-lg">
-
-                {filteredProducts.length} Books Found
-
+          <div className="mb-6 flex flex-col gap-4 border-y border-slate-200 py-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap items-center gap-3 text-slate-700" aria-live="polite">
+              <span className="font-medium">
+                {loading ? "Loading books…" : `${filteredProducts.length} ${filteredProducts.length === 1 ? "book" : "books"}`}
               </span>
-
+              {category && (
+                <span className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-sm text-slate-700 ring-1 ring-slate-200">
+                  {category}
+                  <button
+                    type="button"
+                    onClick={() => chooseCategory("")}
+                    aria-label={`Clear ${category} category`}
+                    className="rounded-full text-slate-500 hover:text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-purple-800"
+                  >
+                    <X size={15} aria-hidden="true" />
+                  </button>
+                </span>
+              )}
             </div>
 
-            <div className="text-lg md:text-xl font-black text-brand-purple-500 text-center">
+            <div className="flex flex-wrap items-center gap-3">
+              <label className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700">
+                <ArrowDownUp size={16} className="text-brand-purple-700" aria-hidden="true" />
+                <span className="sr-only">Sort books</span>
+                <select
+                  aria-label="Sort books"
+                  value={sortBy}
+                  onChange={(event) => {
+                    setVisibleCount(PAGE_SIZE);
+                    setSortBy(event.target.value);
+                  }}
+                  className="max-w-[190px] bg-transparent py-2 text-sm outline-none"
+                >
+                  <option value="newest">Newest</option>
+                  <option value="featured">Featured order</option>
+                  <option value="price-low">Price: low to high</option>
+                  <option value="price-high">Price: high to low</option>
+                  <option value="title">Title: A to Z</option>
+                </select>
+              </label>
 
-              🎈 Happy Learning Starts Here
-
+              <div role="group" aria-label="Book view" className="inline-flex rounded-xl border border-slate-200 bg-white p-1">
+                <button
+                  type="button"
+                  aria-label="Grid view"
+                  aria-pressed={layout === "grid"}
+                  onClick={() => setLayout("grid")}
+                  className={`flex h-9 w-10 items-center justify-center rounded-lg transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple-500 ${layout === "grid" ? "bg-brand-purple-800 text-white" : "text-slate-600 hover:bg-slate-100"}`}
+                >
+                  <LayoutGrid size={18} aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  aria-label="List view"
+                  aria-pressed={layout === "list"}
+                  onClick={() => setLayout("list")}
+                  className={`flex h-9 w-10 items-center justify-center rounded-lg transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple-500 ${layout === "list" ? "bg-brand-purple-800 text-white" : "text-slate-600 hover:bg-slate-100"}`}
+                >
+                  <List size={18} aria-hidden="true" />
+                </button>
+              </div>
             </div>
-
           </div>
 
           {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 lg:gap-10">
-              {Array.from({ length: 3 }).map((_, index) => (
-                <div
-                  key={index}
-                  className="w-full max-w-[460px] mx-auto"
-                >
-                  <ProductSkeleton />
-                </div>
-              ))}
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3" role="status" aria-label="Loading books">
+              {Array.from({ length: 3 }, (_, index) => <ProductSkeleton key={index} />)}
             </div>
-          ) : filteredProducts.length === 0 ? (
-
-            <div className="bg-white/90 backdrop-blur-md rounded-[24px] shadow-2xl p-8 md:p-12 text-center border-4 border-white max-w-4xl mx-auto">
-
-              <div className="text-6xl md:text-7xl mb-6">
-
-                📚
-
+          ) : error ? (
+            <div className="rounded-2xl border border-amber-200 bg-white px-6 py-10 text-center" role="alert">
+              <h2 className="text-lg font-semibold text-slate-900">Books could not be loaded</h2>
+              <p className="mt-2 text-slate-600">Check your connection and try again.</p>
+              <button
+                type="button"
+                onClick={() => {
+                  setLoading(true);
+                  setRetryCount((count) => count + 1);
+                }}
+                className="mt-5 min-h-11 rounded-xl bg-brand-purple-800 px-5 py-2.5 font-semibold text-white hover:bg-brand-purple-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-purple-800"
+              >
+                Retry
+              </button>
+            </div>
+          ) : sortedProducts.length === 0 ? (
+            <div className="rounded-2xl border border-slate-200 bg-white px-6 py-12 text-center">
+              <h2 className="text-xl font-semibold text-slate-900">No books found</h2>
+              <p className="mt-2 text-slate-600">
+                {category ? `There are no books in “${category}” matching this search.` : "Try a different search term."}
+              </p>
+              {category && (
+                <button type="button" onClick={() => chooseCategory("")} className="mt-5 font-semibold text-brand-purple-800 underline-offset-4 hover:underline">
+                  Browse all categories
+                </button>
+              )}
+            </div>
+          ) : (
+            <>
+              <div className={layout === "grid" ? "grid grid-cols-1 items-stretch gap-6 sm:grid-cols-2 xl:grid-cols-3" : "grid grid-cols-1 gap-5"}>
+                {visibleProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} layout={layout} />
+                ))}
               </div>
 
-              <h2 className="text-3xl md:text-4xl font-black text-gray-800">
-
-                No Books Found
-
-              </h2>
-
-              <p className="text-gray-600 text-lg mt-5 max-w-2xl mx-auto leading-8">
-
-                Try searching with another keyword
-                to discover more fun Tamil learning books.
-
-              </p>
-
-            </div>
-
-          ) : (
-
-            /* PRODUCT GRID */
-
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8 lg:gap-10">
-
-              {filteredProducts.map(
-
-                (product) => (
-
-                  <div
-                    key={product.id}
-                    className="flex justify-center"
+              {visibleCount < sortedProducts.length && (
+                <div className="mt-10 text-center">
+                  <button
+                    type="button"
+                    onClick={() => setVisibleCount((count) => count + PAGE_SIZE)}
+                    className="min-h-12 rounded-xl border border-brand-purple-300 bg-white px-6 py-3 font-semibold text-brand-purple-900 transition hover:border-brand-purple-800 hover:bg-brand-purple-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-purple-800"
                   >
-
-                    <div className="w-full max-w-[460px] hover:-translate-y-4 transition duration-500">
-
-                      <ProductCard
-                        product={product}
-                      />
-
-                    </div>
-
-                  </div>
-
-                )
-
+                    Load {Math.min(PAGE_SIZE, sortedProducts.length - visibleCount)} more books
+                  </button>
+                </div>
               )}
-
-            </div>
-
+            </>
           )}
 
+          <div className="mt-10 text-center">
+            <Link to="/" className="text-sm font-semibold text-brand-purple-800 underline-offset-4 hover:underline">
+              Return to home
+            </Link>
+          </div>
         </div>
-
-      </section>
-
+      </main>
       <Footer />
-
     </>
-
   );
-
 };
 
 export default Shop;

@@ -1,16 +1,23 @@
-# React + Vite
+# Kuviyam Publications storefront
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React 19 and Vite storefront for the Paachcharam Tamil books collection. Pages are lazy-loaded through React Router; the Express API is in `../../Publication_backend/kuviyam-backend`.
 
-Currently, two official plugins are available:
+## Local development
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+1. Copy `.env.example` to `.env`. The `VITE_DEV_*` defaults point to the local API at `http://localhost:5000/api` and local site origin at `http://localhost:5173`.
+2. Install dependencies with `npm ci`.
+3. Start the Vite server with `npm run dev`.
+4. Use the backend instructions to configure the API and database.
 
-## React Compiler
+The Razorpay public key is returned by the authenticated backend checkout route. Keep the Razorpay secret only in the backend environment.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Deployment environments
 
-## Expanding the ESLint configuration
+Set `VITE_API_URL` to the deployed API origin ending in `/api` and `VITE_SITE_URL` to the public frontend origin in the hosting provider's build environment before running `npm run build`. Vite embeds these values in the generated static files, so changing them requires a new build and deployment. Local-only `VITE_DEV_API_URL` and `VITE_DEV_SITE_URL` settings do not affect production builds. If `VITE_API_URL` is omitted in production, the current Kuviyam API remains the compatibility default. Development pages set `noindex` metadata automatically.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Build and lint
+
+- `npm run build` creates the static production bundle in `dist/`.
+- `npm run lint` runs ESLint.
+
+Vercel rewrites client-side routes to `index.html`. Update the site URL in `.env` and `index.html` if the canonical production domain changes.

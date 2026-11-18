@@ -1,8 +1,4 @@
-import {
-  useEffect,
-  useState,
-} from "react";
-
+import { useCallback, useState } from "react";
 import {
   motion,
   AnimatePresence,
@@ -20,37 +16,22 @@ import FeaturedBooks from "../components/FeaturedBooks";
 
 import Categories from "../components/Categories";
 
-import Testimonials from "../components/Testimonials";
-
 import Footer from "../components/Footer";
 
 import WhatsAppButton from "../components/WhatsAppButton";
 
-import PageLoader from "../components/PageLoader";
 
 const Home = () => {
-  const [loading, setLoading] =
-    useState(true);
-
-  /* ====================================== */
-  /* PAGE LOADER */
-  /* ====================================== */
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1800);
-
-    return () => clearTimeout(timer);
+  const [categories, setCategories] = useState([]);
+  const handleProductsLoaded = useCallback((products) => {
+    const grouped = new Map();
+    products.forEach((product) => {
+      const name = String(product.category || "").trim();
+      if (!name) return;
+      grouped.set(name, (grouped.get(name) || 0) + 1);
+    });
+    setCategories(Array.from(grouped, ([name, count]) => ({ name, count })));
   }, []);
-
-  /* ====================================== */
-  /* SHOW LOADER */
-  /* ====================================== */
-
-  if (loading) {
-    return <PageLoader />;
-  }
 
   return (
     <AnimatePresence mode="wait">
@@ -74,70 +55,10 @@ const Home = () => {
 
           overflow-x-hidden
 
-          bg-gradient-to-b
-          from-brand-purple-50
-          via-brand-gold-50
-          to-brand-teal-50
+          bg-[#f8f6f0]
+          text-slate-900
         "
       >
-        {/* ====================================== */}
-        {/* FLOATING BACKGROUND ELEMENTS */}
-        {/* ====================================== */}
-
-        <div
-          className="
-            fixed inset-0
-
-            pointer-events-none
-
-            overflow-hidden
-
-            z-0
-          "
-        >
-          {/* CLOUD */}
-
-          <div className="absolute top-10 left-6 text-6xl animate-bounce opacity-30">
-            ☁️
-          </div>
-
-          {/* RAINBOW */}
-
-          <div className="absolute top-24 right-10 text-6xl animate-pulse opacity-40">
-            🌈
-          </div>
-
-          {/* TEDDY */}
-
-          <div className="absolute bottom-32 left-10 text-5xl animate-bounce opacity-30">
-            🧸
-          </div>
-
-          {/* ROCKET */}
-
-          <div className="absolute bottom-20 right-10 text-5xl animate-pulse opacity-30">
-            🚀
-          </div>
-
-          {/* STAR */}
-
-          <div className="absolute top-1/2 left-1/4 text-4xl animate-spin opacity-20">
-            ⭐
-          </div>
-
-          {/* BALLOON */}
-
-          <div className="absolute top-1/3 right-1/3 text-5xl animate-bounce opacity-30">
-            🎈
-          </div>
-
-          {/* BOOK */}
-
-          <div className="absolute bottom-1/3 right-20 text-5xl animate-pulse opacity-30">
-            📚
-          </div>
-        </div>
-
         {/* ====================================== */}
         {/* MAIN CONTENT */}
         {/* ====================================== */}
@@ -171,10 +92,7 @@ const Home = () => {
 
           <div
             className="
-              sticky
-
-              top-0
-
+              relative
               z-[130]
             "
           >
@@ -252,7 +170,7 @@ const Home = () => {
               z-10
             "
           >
-            <FeaturedBooks />
+            <FeaturedBooks onProductsLoaded={handleProductsLoaded} />
           </motion.div>
 
           {/* ====================================== */}
@@ -280,35 +198,7 @@ const Home = () => {
               z-10
             "
           >
-            <Categories />
-          </motion.div>
-
-          {/* ====================================== */}
-          {/* TESTIMONIALS */}
-          {/* ====================================== */}
-
-          <motion.div
-            initial={{
-              opacity: 0,
-              y: 50,
-            }}
-            whileInView={{
-              opacity: 1,
-              y: 0,
-            }}
-            viewport={{
-              once: true,
-            }}
-            transition={{
-              duration: 0.8,
-            }}
-            className="
-              relative
-
-              z-10
-            "
-          >
-            <Testimonials />
+            <Categories categories={categories} />
           </motion.div>
 
           {/* ====================================== */}

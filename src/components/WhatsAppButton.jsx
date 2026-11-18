@@ -24,123 +24,24 @@ const WhatsAppButton = () => {
       transition={{
         duration: 0.5,
       }}
-      className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50"
+      className="fixed bottom-5 right-4 sm:bottom-6 sm:right-6 z-50"
     >
       <a
         href={whatsappUrl}
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Chat on WhatsApp"
-        className="relative flex items-center"
+        title="Chat with Kuviyam Publications on WhatsApp"
+        className="group relative flex h-14 w-14 items-center justify-center rounded-full bg-green-600 text-white shadow-xl ring-2 ring-white transition hover:-translate-y-1 hover:bg-green-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-green-300 sm:h-14 sm:w-[210px] sm:justify-start sm:gap-3 sm:rounded-full sm:px-2"
       >
-        {/* PULSE EFFECT */}
-        <span className="absolute inset-0 rounded-3xl bg-green-400 opacity-25 animate-ping"></span>
-
-        {/* FLOATING EMOJI */}
-        <div className="absolute -top-4 -left-3 text-2xl animate-bounce pointer-events-none">
-          💬
-        </div>
-
-        {/* MAIN BUTTON */}
-        <motion.div
-          whileHover={{
-            scale: 1.05,
-            y: -2,
-          }}
-          whileTap={{
-            scale: 0.96,
-          }}
-          className="
-            relative
-            flex items-center justify-center
-            gap-3 sm:gap-4
-
-            w-[min(92vw,330px)]
-            sm:w-[340px]
-            min-h-[76px]
-
-            px-4 sm:px-5 py-3
-
-            rounded-2xl
-
-            bg-gradient-to-r
-            from-green-500
-            to-green-600
-
-            hover:from-green-600
-            hover:to-green-700
-
-            border-4 border-white
-
-            shadow-2xl
-            overflow-hidden
-          "
-        >
-          {/* LIGHT OVERLAY */}
-          <div className="absolute inset-0 bg-white/10"></div>
-
-          {/* ICON BOX */}
-          <div
-            className="
-              relative z-10
-              w-12 h-12
-              sm:w-14 sm:h-14
-
-              rounded-2xl
-              bg-white
-
-              flex items-center justify-center
-
-              shadow-lg
-              shrink-0
-            "
-          >
-            <FaWhatsapp
-              size={30}
-              className="text-green-500"
-            />
-          </div>
-
-          {/* TEXT CONTENT */}
-          <div
-            className="
-              relative z-10
-
-              flex flex-col justify-center
-
-              px-2
-
-              text-center
-            "
-          >
-            <h3
-              className="
-                text-xl
-                sm:text-2xl
-                font-extrabold
-                text-white
-
-                leading-tight
-                whitespace-nowrap
-              "
-            >
-              Chat With Us
-            </h3>
-
-            <p
-              className="
-                text-sm
-                sm:text-base
-                text-green-100
-
-                mt-1
-                leading-normal
-              "
-            >
-              Tamil Learning Help 🎈
-            </p>
-          </div>
-        </motion.div>
+        <span className="absolute inset-0 rounded-full bg-green-400 opacity-0 transition-opacity group-hover:opacity-20" aria-hidden="true" />
+        <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-green-600 shadow-sm sm:h-10 sm:w-10">
+          <FaWhatsapp size={25} aria-hidden="true" />
+        </span>
+        <span className="sr-only sm:not-sr-only sm:flex sm:flex-col sm:pr-3 sm:text-left">
+          <span className="text-sm font-bold leading-tight">Chat with us</span>
+          <span className="hidden text-xs text-green-100 md:block">Tamil learning help</span>
+        </span>
       </a>
     </motion.div>
   );

@@ -94,6 +94,7 @@ const CartProvider = ({ children }) => {
         setCartData(response.data);
       } catch (error) {
         console.error("Failed to add to cart:", error);
+        throw error;
       } finally {
         setLoading(false);
       }

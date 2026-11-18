@@ -14,9 +14,7 @@ import {
 } from "framer-motion";
 
 import {
-  Star,
   ShoppingCart,
-  Sparkles,
   BookOpen,
   Heart,
 } from "lucide-react";
@@ -27,12 +25,21 @@ import {
 
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import { toDisplayImageUrl } from "../utils/imageUrls";
 import { CartContext } from "../context/cartContextValue";
 import { AuthContext } from "../context/authContextValue";
 import {
   productAPI,
   wishlistAPI
 } from "../utils/api";
+
+const configuredSiteUrl = import.meta.env.DEV
+  ? import.meta.env.VITE_DEV_SITE_URL
+  : import.meta.env.VITE_SITE_URL;
+const SITE_URL = (
+  configuredSiteUrl ||
+  (import.meta.env.DEV ? window.location.origin : "https://kuviyam-ecommerce.vercel.app")
+).replace(/\/$/, "");
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -41,46 +48,95 @@ const ProductDetails = () => {
   const { isAuthenticated } = useContext(AuthContext);
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadedProductId, setLoadedProductId] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
   const [inWishlist, setInWishlist] = useState(false);
   const [wishlistLoading, setWishlistLoading] = useState(false);
 
   useEffect(() => {
+    let active = true;
+
     const fetchProductAndWishlist = async () => {
       try {
         const response = await productAPI.getProductById(id);
         const productData = response.data.product || response.data.data;
+        if (!productData) throw new Error("Product response was empty.");
+        if (!active) return;
         setProduct(productData);
         setSelectedImage(productData.images?.[0] || "/Paachcharam_book.png");
+        setLoadedProductId(String(id));
       } catch (error) {
+        if (!active) return;
         console.error("Failed to fetch product:", error);
         toast.error("Product not found");
         navigate("/shop");
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
 
-      if (isAuthenticated) {
+      if (active && isAuthenticated) {
         try {
           const wishlistRes = await wishlistAPI.getWishlist();
           const wishlistItems = wishlistRes.data.wishlist || wishlistRes.data.data || [];
           const isInWishlist = wishlistItems.some(item => item.id === Number(id));
-          setInWishlist(isInWishlist);
+          if (active) setInWishlist(isInWishlist);
         } catch (err) {
-          console.error("Failed to check wishlist:", err);
+          if (active) console.error("Failed to check wishlist:", err);
         }
       }
     };
 
     fetchProductAndWishlist();
+    return () => {
+      active = false;
+    };
   }, [id, navigate, isAuthenticated]);
+
+  useEffect(() => {
+    if (!product) return undefined;
+
+    const title = `${product.title} | Tamil Children's Book | Kuviyam Publications`;
+    const description = String(product.description || "View this book from the Paachcharam Tamil learning collection.")
+      .replace(/\s+/g, " ")
+      .slice(0, 160);
+    const productImage = product.images?.[0]
+      ? new URL(toDisplayImageUrl(product.images[0]), SITE_URL).href
+      : undefined;
+
+    document.title = title;
+    document.head.querySelector('meta[name="description"]')?.setAttribute("content", description);
+    document.head.querySelector('meta[property="og:title"]')?.setAttribute("content", title);
+    document.head.querySelector('meta[property="og:description"]')?.setAttribute("content", description);
+    if (productImage) {
+      document.head.querySelector('meta[property="og:image"]')?.setAttribute("content", productImage);
+    }
+
+    const structuredData = document.createElement("script");
+    structuredData.id = "product-structured-data";
+    structuredData.type = "application/ld+json";
+    structuredData.textContent = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "Product",
+      name: product.title,
+      description,
+      ...(productImage ? { image: [productImage] } : {}),
+      offers: {
+        "@type": "Offer",
+        priceCurrency: "INR",
+        price: Number(product.price),
+        url: `${SITE_URL}/product/${encodeURIComponent(product.id)}`,
+      },
+    });
+    document.head.append(structuredData);
+
+    return () => structuredData.remove();
+  }, [product]);
 
   /* ====================================== */
   /* ADD TO CART */
   /* ====================================== */
 
-  const handleAddToCart =
-    () => {
+  const handleAddToCart = async () => {
       /* CHECK LOGIN */
 
       if (
@@ -99,32 +155,22 @@ const ProductDetails = () => {
           }
         );
 
-        setTimeout(() => {
-          navigate(
-            "/login"
-          );
-        }, 1500);
+        navigate("/login");
 
         return;
       }
 
-      /* ADD PRODUCT */
-
-      addToCart(product);
-
-      toast.success(
-        `${product.title} added to cart 🛒`,
-        {
-          position:
-            "top-right",
-
-          autoClose: 2500,
-
-          theme:
-            "colored",
-        }
-      );
-    };
+    try {
+      await addToCart(product);
+      toast.success(`${product.title} added to cart.`, {
+        position: "top-right",
+        autoClose: 2500,
+        theme: "colored",
+      });
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Could not add this book to your cart.");
+    }
+  };
 
   /* ====================================== */
   /* WISHLIST HANDLERS */
@@ -160,7 +206,7 @@ const ProductDetails = () => {
   /* PRODUCT NOT FOUND */
   /* ====================================== */
 
-  if (loading) {
+  if (loading || loadedProductId !== String(id)) {
     return (
       <>
         <Navbar />
@@ -387,35 +433,11 @@ const ProductDetails = () => {
                   {product.category}
                 </span>
 
-                <span
-                  className="
-                    bg-brand-gold-400
-
-                    text-gray-800
-
-                    px-4 py-2
-
-                    rounded-full
-
-                    text-sm
-
-                    font-bold
-
-                    shadow-lg
-
-                    flex items-center gap-1
-                  "
-                >
-                  <Sparkles
-                    size={14}
-                  />
-
-                  Kids Favorite
-                </span>
               </div>
 
               {/* MAIN IMAGE */}
 
+              <div className="mx-auto aspect-[4/5] w-full max-w-[420px] bg-[#f6f2e9]">
               <motion.img
                 key={selectedImage}
                 initial={{
@@ -429,16 +451,16 @@ const ProductDetails = () => {
                 transition={{
                   duration: 0.4,
                 }}
-                src={selectedImage || product.images?.[0] || "/Paachcharam_book.png"}
+                src={toDisplayImageUrl(selectedImage || product.images?.[0] || "/Paachcharam_book.png")}
                 alt={product.title}
                 className="
+                  h-full
                   w-full
-                  h-[320px]
-                  sm:h-[420px]
-                  md:h-[520px]
-                  object-cover
+                  object-contain
+                  p-4
                 "
               />
+              </div>
             </div>
 
             {/* ====================================== */}
@@ -498,13 +520,15 @@ const ProductDetails = () => {
                     `}
                   >
                     <img
-                      src={image}
+                      src={toDisplayImageUrl(image)}
                       alt=""
                       className="
                         w-20 h-20
                         md:w-24 md:h-24
 
-                        object-cover
+                        bg-[#f6f2e9]
+                        object-contain
+                        p-2
                       "
                     />
                   </motion.div>
@@ -642,39 +666,6 @@ const ProductDetails = () => {
               </h1>
 
               {/* RATING */}
-
-              <div
-                className="
-                  flex items-center gap-2
-
-                  mt-8
-                "
-              >
-                {[...Array(5)].map(
-                  (_, index) => (
-                    <Star
-                      key={index}
-                      size={24}
-                      className="
-                        text-brand-gold-400
-                        fill-brand-gold-400
-                      "
-                    />
-                  )
-                )}
-
-                <span
-                  className="
-                    text-gray-600
-
-                    font-bold
-
-                    ml-2
-                  "
-                >
-                  Loved by Kids 🌈
-                </span>
-              </div>
 
               {/* DESCRIPTION */}
 

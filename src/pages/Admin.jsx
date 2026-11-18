@@ -24,6 +24,7 @@ import Footer from "../components/Footer";
 import { AuthContext } from "../context/authContextValue";
 import { toast } from "react-toastify";
 import { adminAPI, galleryAPI } from "../utils/api";
+import { toDisplayImageUrl } from "../utils/imageUrls";
 
 const menuItems = [
   { key: "dashboard", title: "Dashboard", icon: TrendingUp, path: "/admin" },
@@ -497,7 +498,7 @@ const ProductsSection = ({ products, onChanged }) => {
               <div className="flex flex-col gap-4">
                 {product.images?.[0] ? (
                   <img
-                    src={product.images[0]}
+                    src={toDisplayImageUrl(product.images[0])}
                     alt={product.title}
                     className="h-40 w-full rounded-2xl bg-brand-purple-50 object-contain"
                   />

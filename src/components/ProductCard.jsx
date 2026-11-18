@@ -5,7 +5,6 @@ import {
 } from "react";
 
 import {
-  Star,
   ShoppingCart,
   Sparkles,
   Heart,
@@ -24,10 +23,13 @@ import {
 } from "../context/authContextValue";
 
 import { wishlistAPI } from "../utils/api";
+import { toDisplayImageUrl } from "../utils/imageUrls";
 
 const ProductCard = ({
   product,
+  layout = "grid",
 }) => {
+  const isList = layout === "list";
   const { addToCart } =
     useContext(CartContext);
 
@@ -39,8 +41,7 @@ const ProductCard = ({
   /* HANDLE ADD TO CART */
   /* ====================================== */
 
-  const handleAddToCart =
-    () => {
+  const handleAddToCart = async () => {
       /* LOGIN CHECK */
 
       if (
@@ -62,23 +63,17 @@ const ProductCard = ({
         return;
       }
 
-      /* ADD PRODUCT */
-
-      addToCart(product);
-
-      toast.success(
-        `${product.title} added to cart 🛒`,
-        {
-          position:
-            "top-right",
-
-          autoClose: 2500,
-
-          theme:
-            "colored",
-        }
-      );
-    };
+    try {
+      await addToCart(product);
+      toast.success(`${product.title} added to cart.`, {
+        position: "top-right",
+        autoClose: 2500,
+        theme: "colored",
+      });
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Could not add this book to your cart.");
+    }
+  };
 
   /* ====================================== */
   /* HANDLE WISHLIST */
@@ -121,136 +116,23 @@ const ProductCard = ({
 
   return (
     <div
-      className="
-        group
-        relative
-
-        overflow-hidden
-
-        bg-white/95
-        backdrop-blur-md
-
-        rounded-[32px]
-
-        border border-white/80
-
-        shadow-[0_20px_60px_rgba(0,0,0,0.08)]
-
-        hover:shadow-[0_30px_80px_rgba(0,0,0,0.14)]
-
-        transition-all
-        duration-500
-
-        hover:-translate-y-3
-
-        h-full
-
-        flex flex-col
-      "
+      className={`group relative flex h-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl ${isList ? "flex-col sm:flex-row" : "flex-col"}`}
     >
-      {/* ====================================== */}
-      {/* BACKGROUND GLOW */}
-      {/* ====================================== */}
-
-      <div
-        className="
-          absolute
-          -top-28
-          -right-28
-
-          w-64 h-64
-
-          bg-brand-purple-300
-
-          rounded-full
-
-          opacity-10
-
-          blur-3xl
-
-          group-hover:scale-125
-
-          transition duration-700
-        "
-      ></div>
-
-      <div
-        className="
-          absolute
-          -bottom-28
-          -left-28
-
-          w-64 h-64
-
-          bg-brand-gold-300
-
-          rounded-full
-
-          opacity-10
-
-          blur-3xl
-
-          group-hover:scale-125
-
-          transition duration-700
-        "
-      ></div>
-
-      {/* ====================================== */}
-      {/* FLOATING EMOJIS */}
-      {/* ====================================== */}
-
-      <div
-        className="
-          absolute
-          top-5 right-5
-
-          text-3xl
-
-          opacity-30
-
-          animate-bounce
-
-          z-20
-        "
-      >
-        🌈
-      </div>
-
-      <div
-        className="
-          absolute
-          bottom-10 left-6
-
-          text-3xl
-
-          opacity-20
-
-          animate-pulse
-
-          z-20
-        "
-      >
-        ⭐
-      </div>
-
       {/* ====================================== */}
       {/* IMAGE SECTION */}
       {/* ====================================== */}
 
       <div
-        className="
+        className={`
           relative
 
           overflow-hidden
 
-          rounded-t-[32px]
+          rounded-t-2xl
 
-          bg-gradient-to-br
-          from-brand-purple-100
-          via-brand-gold-50
-          to-brand-teal-100
-        "
+          bg-[#f1ede3]
+          ${isList ? "sm:w-64 sm:shrink-0 sm:rounded-l-2xl sm:rounded-tr-none" : ""}
+        `}
       >
         {/* BADGES */}
 
@@ -270,19 +152,17 @@ const ProductCard = ({
 
           <span
             className="
-              bg-brand-purple-500
+              bg-brand-purple-50
 
-              text-white
+              text-brand-purple-900
 
-              px-4 py-2
+              px-3 py-1.5
 
-              rounded-2xl
+              rounded-full
 
               text-xs md:text-sm
 
-              font-black
-
-              shadow-lg
+              font-semibold
             "
           >
             {product.category}
@@ -291,23 +171,22 @@ const ProductCard = ({
           {/* COLLECTION */}
 
           <span
-            className="
-              bg-brand-gold-300
+            className={`
+              bg-white
 
               text-gray-800
 
-              px-4 py-2
+              px-3 py-1.5
 
-              rounded-2xl
+              rounded-full
 
               text-xs md:text-sm
 
-              font-black
-
-              shadow-lg
+              font-semibold
 
               flex items-center gap-2
-            "
+              ${isList ? "hidden" : ""}
+            `}
           >
             <Sparkles
               size={14}
@@ -320,6 +199,8 @@ const ProductCard = ({
         {/* FAVORITE */}
 
         <button
+          type="button"
+          aria-label={`Add ${product.title} to wishlist`}
           onClick={
             handleWishlist
           }
@@ -333,7 +214,7 @@ const ProductCard = ({
 
             rounded-full
 
-            bg-white/90
+            bg-white
 
             backdrop-blur-md
 
@@ -359,17 +240,23 @@ const ProductCard = ({
         {/* IMAGE */}
 
         <img
-          src={product?.images?.[0] || "/Paachcharam_book.png"}
-          alt={product?.title}
-          className="
+          src={toDisplayImageUrl(product?.images?.[0] || "/Paachcharam_book.png")}
+          alt={`${product?.title || "Tamil learning book"} cover`}
+          loading="lazy"
+          decoding="async"
+          className={`
+            mx-auto
             h-[260px]
             sm:h-[300px]
             md:h-[340px]
             w-full
-            object-cover
-            group-hover:scale-105
-            transition duration-700
-          "
+            max-w-[280px]
+            group-hover:scale-[1.02]
+            transition duration-300
+            object-contain
+            p-5
+            ${isList ? "sm:h-full sm:min-h-[340px] sm:max-h-[420px] sm:w-full" : ""}
+          `}
         />
 
         {/* OVERLAY */}
@@ -396,15 +283,14 @@ const ProductCard = ({
             opacity-0
 
             group-hover:opacity-100
+            focus-within:opacity-100
 
             transition duration-500
           "
         >
           <Link
             to={`/product/${product.id}`}
-          >
-            <button
-              className="
+            className="
                 bg-white/90
 
                 backdrop-blur-md
@@ -425,11 +311,10 @@ const ProductCard = ({
 
                 transition duration-300
               "
-            >
+          >
               <Eye size={20} />
 
               Quick View
-            </button>
           </Link>
         </div>
       </div>
@@ -439,13 +324,14 @@ const ProductCard = ({
       {/* ====================================== */}
 
       <div
-        className="
+        className={`
           relative z-10
 
           flex flex-col flex-1
 
-          p-6 md:p-7
-        "
+          p-5 sm:p-6
+          ${isList ? "sm:p-8" : ""}
+        `}
       >
         {/* LABEL */}
 
@@ -457,13 +343,13 @@ const ProductCard = ({
 
             text-brand-purple-500
 
-            font-black
+            font-semibold
 
             text-sm
 
             uppercase
 
-            tracking-[2px]
+            tracking-[0.12em]
 
             mb-4
           "
@@ -475,59 +361,20 @@ const ProductCard = ({
           Tamil Learning Collection
         </div>
 
-        {/* RATING */}
-
-        <div
-          className="
-            flex items-center flex-wrap
-
-            gap-1
-
-            mb-5
-          "
-        >
-          {[...Array(5)].map(
-            (_, index) => (
-              <Star
-                key={index}
-                size={18}
-                className="
-                  text-brand-gold-400
-                  fill-brand-gold-400
-                "
-              />
-            )
-          )}
-
-          <span
-            className="
-              text-gray-500
-
-              text-sm
-
-              ml-2
-
-              font-semibold
-            "
-          >
-            Loved by Kids
-          </span>
-        </div>
-
         {/* TITLE */}
 
         <h3
           className="
-            text-lg
-            md:text-[30px]
+            text-xl
+            md:text-2xl
 
-            font-black
+            font-semibold
 
             text-gray-900
 
             leading-tight
 
-            min-h-[80px]
+            min-h-[60px]
 
             line-clamp-2
           "
@@ -541,17 +388,17 @@ const ProductCard = ({
           className="
             text-gray-600
 
-            mt-5
+            mt-3
 
-            text-base md:text-lg
+            text-base
 
-            leading-8
+            leading-7
 
             flex-1
 
             line-clamp-4
 
-            min-h-[80px]
+            min-h-[70px]
           "
         >
           {
@@ -596,7 +443,7 @@ const ProductCard = ({
 
                   uppercase
 
-                  tracking-[4px]
+                  tracking-[0.12em]
 
                   font-black
                 "
@@ -616,7 +463,7 @@ const ProductCard = ({
                     text-4xl
                     md:text-5xl
 
-                    font-black
+                    font-semibold
 
                     text-brand-purple-500
                   "
@@ -624,95 +471,19 @@ const ProductCard = ({
                   ₹{product.price}
                 </h3>
 
-                <span
-                  className="
-                    text-gray-400
-
-                    line-through
-
-                    text-lg
-
-                    font-bold
-
-                    mb-1
-                  "
-                >
-                  ₹
-                  {Math.round(
-                    product.price *
-                      1.3
-                  )}
-                </span>
               </div>
-            </div>
-
-            {/* TAG */}
-
-            <div
-              className="
-                bg-brand-purple-100
-
-                text-brand-purple-600
-
-                px-5 py-3
-
-                rounded-2xl
-
-                font-black
-
-                text-sm
-
-                shadow-md
-
-                whitespace-nowrap
-              "
-            >
-              🎉 Best Seller
             </div>
           </div>
 
           {/* BUTTONS */}
 
-          <div className="flex flex-col gap-4">
+          <div className={`flex flex-col gap-4 ${isList ? "sm:flex-row" : ""}`}>
             {/* VIEW DETAILS */}
 
             <Link
               to={`/product/${product.id}`}
-              className="w-full"
+              className={`group/button flex w-full items-center justify-center gap-2 rounded-xl bg-brand-purple-800 px-4 py-3.5 text-base font-semibold text-white transition hover:bg-brand-purple-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-purple-800 ${isList ? "sm:flex-1" : ""}`}
             >
-              <button
-                className="
-                  group/button
-
-                  w-full
-
-                  bg-gradient-to-r
-                  from-brand-purple-500
-                  via-brand-red-500
-                  to-brand-gold-400
-
-                  hover:from-brand-purple-600
-                  hover:to-brand-gold-500
-
-                  text-white
-
-                  py-5
-
-                  rounded-2xl
-
-                  font-black
-
-                  text-lg
-
-                  shadow-2xl
-
-                  transition duration-300
-
-                  hover:scale-[1.02]
-
-                  flex items-center justify-center gap-3
-                "
-              >
                 <Eye
                   size={22}
                 />
@@ -728,16 +499,16 @@ const ProductCard = ({
                 >
                   →
                 </span>
-              </button>
             </Link>
 
             {/* ADD TO CART */}
 
             <button
+              type="button"
               onClick={
                 handleAddToCart
               }
-              className="
+              className={`
                 w-full
 
                 bg-white
@@ -751,7 +522,7 @@ const ProductCard = ({
 
                 rounded-2xl
 
-                font-black
+                    font-semibold
 
                 text-lg
 
@@ -763,7 +534,8 @@ const ProductCard = ({
                 transition duration-300
 
                 flex items-center justify-center gap-3
-              "
+                ${isList ? "sm:w-auto sm:min-w-0 sm:flex-1" : ""}
+              `}
             >
               <ShoppingCart
                 size={22}

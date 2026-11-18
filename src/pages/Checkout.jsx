@@ -27,13 +27,33 @@ import { CartContext } from "../context/cartContextValue";
 import { AuthContext } from "../context/authContextValue";
 import { orderAPI, paymentAPI } from "../utils/api";
 
+let razorpayScriptPromise;
+
+const loadRazorpay = () => {
+  if (typeof window.Razorpay === "function") return Promise.resolve();
+  if (razorpayScriptPromise) return razorpayScriptPromise;
+
+  razorpayScriptPromise = new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    script.onload = () => resolve();
+    script.onerror = () => {
+      razorpayScriptPromise = undefined;
+      reject(new Error("Online checkout could not be loaded. Please try again."));
+    };
+    document.head.appendChild(script);
+  });
+
+  return razorpayScriptPromise;
+};
+
 const Checkout = () => {
   const navigate = useNavigate();
   const { cartItems, clearCart } = useContext(CartContext);
   const { isAuthenticated, user } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('COD');
-  const [rzpInstance, setRzpInstance] = useState(null);
 
   /* ====================================== */
   /* AUTH CHECK */
@@ -52,23 +72,6 @@ const Checkout = () => {
       }, 1500);
     }
   }, [isAuthenticated, navigate]);
-
-  /* ====================================== */
-  /* HANDLE PAYMENT METHOD CHANGE */
-  /* ====================================== */
-
-  useEffect(() => {
-    // If payment method changes, clean up Razorpay instance and reset loading
-    if (rzpInstance) {
-      try {
-        rzpInstance.close();
-      } catch (err) {
-        // Ignore any errors when trying to close
-      }
-      setRzpInstance(null);
-    }
-    setLoading(false);
-  }, [paymentMethod]);
 
   /* ====================================== */
   /* FORM STATE */
@@ -125,30 +128,37 @@ const Checkout = () => {
   /* ====================================== */
   const makeRazorpayPayment = async (orderData) => {
     try {
-      // Create Razorpay order from backend
-      const paymentRes = await paymentAPI.createOrder({
-        amount: total,
-      });
-      const razorpayOrder = paymentRes.data.order;
+      await loadRazorpay();
 
-      // Initialize Razorpay checkout
+      const paymentRes = await paymentAPI.createOrder({
+        customer: orderData.customer,
+        items: orderData.items.map((item) => ({
+          productId: item.id,
+          quantity: item.quantity,
+        })),
+      });
       const options = {
-        key: "rzp_test_SlN41OijJX8EXL", // Your Razorpay test key
-        amount: razorpayOrder.amount,
+        key: paymentRes.data.keyId,
+        amount: paymentRes.data.razorpayOrder.amount,
         currency: "INR",
         name: "Kuviyam Publications",
         description: "Tamil Learning Books",
-        order_id: razorpayOrder.id,
+        order_id: paymentRes.data.razorpayOrder.id,
         handler: async (response) => {
-          // Verify payment
-          await paymentAPI.verifyPayment({
-            razorpay_order_id: response.razorpay_order_id,
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_signature: response.razorpay_signature,
-          });
-
-          // Now place the actual order
-          await placeOrderDirect(orderData);
+          try {
+            const result = await paymentAPI.verifyPayment({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            });
+            toast.success(result.data.message || "Payment received successfully.");
+            await clearCart();
+            navigate("/success");
+          } catch (error) {
+            toast.error(error.response?.data?.message || "We could not verify the payment.");
+          } finally {
+            setLoading(false);
+          }
         },
         prefill: {
           name: formData.name,
@@ -161,17 +171,14 @@ const Checkout = () => {
         modal: {
           ondismiss: () => {
             setLoading(false);
-            setRzpInstance(null);
           }
         }
       };
       const rzp = new window.Razorpay(options);
-      setRzpInstance(rzp);
       rzp.open();
     } catch (error) {
-      toast.error(error.response?.data?.message || "Payment failed");
+      toast.error(error.response?.data?.message || error.message || "Payment failed");
       setLoading(false);
-      setRzpInstance(null);
     }
   };
 
@@ -633,6 +640,7 @@ const Checkout = () => {
 
                     <div>
                       <label
+                        htmlFor="checkout-name"
                         className="
                           block
 
@@ -649,8 +657,11 @@ const Checkout = () => {
                       </label>
 
                       <input
+                        id="checkout-name"
                         type="text"
                         name="name"
+                        autoComplete="name"
+                        required
                         placeholder="Enter your name"
                         value={
                           formData.name
@@ -685,6 +696,7 @@ const Checkout = () => {
 
                     <div>
                       <label
+                        htmlFor="checkout-phone"
                         className="
                           block
 
@@ -701,8 +713,12 @@ const Checkout = () => {
                       </label>
 
                       <input
+                        id="checkout-phone"
                         type="text"
                         name="phone"
+                        autoComplete="tel"
+                        inputMode="tel"
+                        required
                         placeholder="Enter your phone number"
                         value={
                           formData.phone
@@ -737,6 +753,7 @@ const Checkout = () => {
 
                     <div>
                       <label
+                        htmlFor="checkout-address"
                         className="
                           block
 
@@ -754,7 +771,10 @@ const Checkout = () => {
                       </label>
 
                       <textarea
+                        id="checkout-address"
                         name="address"
+                        autoComplete="street-address"
+                        required
                         rows="6"
                         placeholder="Enter your address"
                         value={

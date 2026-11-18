@@ -3,6 +3,7 @@ import {
   Routes,
   Route,
   Navigate,
+  Link,
 } from "react-router-dom";
 
 import {
@@ -12,6 +13,8 @@ import {
 } from "react";
 
 import PageLoader from "../components/PageLoader";
+import DocumentMetadata from "../components/DocumentMetadata";
+import BackToTopButton from "../components/BackToTopButton";
 
 import { AuthContext } from "../context/authContextValue";
 
@@ -186,16 +189,13 @@ const NotFound = () => {
             leading-9
           "
         >
-          The colorful learning page
-          you are looking for seems
-          to have wandered away into
-          a rainbow 🌈
+          The address you entered does not match a page in our catalog.
         </p>
 
         {/* BUTTON */}
 
-        <a
-          href="/"
+        <Link
+          to="/"
           className="
             inline-flex items-center justify-center
 
@@ -225,8 +225,8 @@ const NotFound = () => {
             transition duration-300
           "
         >
-          🏠 Back To Home
-        </a>
+          Return to home
+        </Link>
       </div>
     </div>
   );
@@ -239,6 +239,8 @@ const NotFound = () => {
 const AppRoutes = () => {
   return (
     <BrowserRouter>
+      <DocumentMetadata />
+      <BackToTopButton />
       <Suspense
         fallback={<PageLoader />}
       >

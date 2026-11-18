@@ -14,6 +14,7 @@ import {
   Menu,
   X,
   Sparkles,
+  LogIn,
   LogOut,
 } from "lucide-react";
 
@@ -22,6 +23,12 @@ import logo from "../assets/Paachcharam_logo_02.png";
 import { CartContext } from "../context/cartContextValue";
 
 import { AuthContext } from "../context/authContextValue";
+
+const authActionBase = "inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[.98]";
+const loginActionClass = `${authActionBase} h-11 min-w-[96px] px-5 bg-brand-purple-700 text-white shadow-sm hover:bg-brand-purple-800 focus-visible:ring-brand-purple-500`;
+const logoutActionClass = `${authActionBase} h-11 px-4 border border-rose-200 bg-white text-rose-700 shadow-sm hover:border-rose-300 hover:bg-rose-50 focus-visible:ring-rose-500`;
+const mobileLoginActionClass = `${authActionBase} min-h-12 w-full px-6 py-3 bg-brand-purple-700 text-base text-white shadow-sm hover:bg-brand-purple-800 focus-visible:ring-brand-purple-500`;
+const mobileLogoutActionClass = `${authActionBase} min-h-12 w-full px-6 py-3 border border-rose-200 bg-white text-base text-rose-700 shadow-sm hover:border-rose-300 hover:bg-rose-50 focus-visible:ring-rose-500`;
 
 const Navbar = () => {
   const [menuOpen, setMenuOpen] =
@@ -43,7 +50,7 @@ const Navbar = () => {
   /* CART */
   /* ====================================== */
 
-  const { cartItems } =
+  const { totalItems } =
     useContext(CartContext);
 
   /* ====================================== */
@@ -72,119 +79,18 @@ const Navbar = () => {
 
   // Create navLinks with optional admin link
   const navLinks = [
-    {
-      path: "/",
-      label: "Home",
-      emoji: "🏠",
-      bg: `
-        bg-gradient-to-r
-        from-brand-purple-500
-        to-brand-purple-400
-        hover:from-brand-purple-600
-        hover:to-brand-purple-500
-      `,
-      text: "text-white",
-    },
-    {
-      path: "/shop",
-      label: "Shop",
-      emoji: "🛍️",
-      bg: `
-        bg-gradient-to-r
-        from-brand-teal-400
-        to-brand-teal-500
-        hover:from-brand-teal-500
-        hover:to-brand-teal-600
-      `,
-      text: "text-white",
-    },
-    {
-      path: "/gallery",
-      label: "Gallery",
-      emoji: "🖼️",
-      bg: `
-        bg-gradient-to-r
-        from-pink-400
-        to-rose-500
-        hover:from-pink-500
-        hover:to-rose-600
-      `,
-      text: "text-white",
-    },
-    {
-      path: "/blog",
-      label: "Blog",
-      emoji: "✍️",
-      bg: `
-        bg-gradient-to-r
-        from-indigo-400
-        to-blue-500
-        hover:from-indigo-500
-        hover:to-blue-600
-      `,
-      text: "text-white",
-    },
-    {
-      path: "/about",
-      label: "About",
-      emoji: "📘",
-      bg: `
-        bg-gradient-to-r
-        from-brand-red-400
-        to-brand-red-500
-        hover:from-brand-red-600
-        hover:to-brand-red-700
-      `,
-      text: "text-white",
-    },
-    {
-      path: "/contact",
-      label: "Contact",
-      emoji: "📞",
-      bg: `
-        bg-gradient-to-r
-        from-brand-gold-400
-        to-brand-gold-500
-        hover:from-brand-gold-500
-        hover:to-brand-gold-600
-      `,
-      text: "text-gray-900",
-    },
+    { path: "/", label: "Home" },
+    { path: "/shop", label: "Shop" },
+    { path: "/gallery", label: "Gallery" },
+    { path: "/blog", label: "Journal" },
+    { path: "/about", label: "About" },
+    { path: "/contact", label: "Contact" },
   ];
 
   return (
     <nav
-      className="
-        sticky top-0 z-50 overflow-hidden
-
-        bg-gradient-to-r
-        from-brand-purple-50/95
-        via-brand-gold-50/95
-        to-brand-teal-50/95
-
-        backdrop-blur-md
-
-        shadow-lg
-
-        border-b-2 border-brand-lavender-400
-      "
+      className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/95 shadow-sm backdrop-blur-md"
     >
-      {/* FLOATING EMOJIS */}
-
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-2 left-5 text-xl opacity-20">
-          ☁️
-        </div>
-
-        <div className="absolute top-3 right-8 text-xl opacity-20">
-          🚀
-        </div>
-
-        <div className="absolute bottom-1 right-5 text-2xl opacity-20">
-          🌈
-        </div>
-      </div>
-
       {/* ====================================== */}
       {/* MAIN CONTAINER */}
       {/* ====================================== */}
@@ -196,9 +102,9 @@ const Navbar = () => {
 
             gap-4
 
-            min-h-[110px]
+            min-h-[82px]
 
-            py-4
+            py-3
           "
         >
           {/* ====================================== */}
@@ -207,85 +113,20 @@ const Navbar = () => {
 
           <Link
             to="/"
-            className="
-              flex items-center
-
-              gap-4
-
-              shrink-0
-            "
+            aria-label="Paachcharam home"
+            className="flex shrink-0 items-center gap-3 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand-purple-800"
           >
-            {/* LOGO */}
-
-            <div
-              className="
-                bg-white
-
-                rounded-[26px]
-
-                px-4 py-3
-
-                shadow-xl
-
-                border-2 border-brand-lavender-300
-
-                flex items-center justify-center
-
-                overflow-hidden
-
-                min-w-[160px]
-                sm:min-w-[190px]
-                xl:min-w-[220px]
-              "
-            >
+            <span className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-2xl border border-brand-lavender-300 bg-white p-1 shadow-sm">
               <img
                 src={logo}
-                alt="Paachcharam Logo"
-                className="
-                  h-[58px]
-                  sm:h-[70px]
-                  xl:h-[78px]
-
-                  w-auto
-
-                  object-contain
-
-                  block
-                "
+                alt=""
+                className="h-full w-full object-contain"
               />
-            </div>
-
-            {/* BRAND */}
-
-            <div className="hidden 2xl:block leading-tight">
-              <div
-                className="
-                  text-[32px]
-
-                  font-black
-
-                  text-brand-purple-900
-
-                  whitespace-nowrap
-                "
-              >
-                Paachcharam
-              </div>
-
-              <p
-                className="
-                  text-sm
-
-                  font-bold
-
-                  text-brand-purple-500
-
-                  mt-1
-                "
-              >
-                Kids Learning World 🌈
-              </p>
-            </div>
+            </span>
+            <span className="hidden min-w-0 min-[480px]:block leading-tight">
+              <span className="block truncate font-serif text-xl font-semibold text-brand-purple-900 xl:text-2xl">Paachcharam</span>
+              <span className="mt-1 block text-[9px] font-bold uppercase tracking-[.15em] text-brand-purple-500">Kuviyam Publications</span>
+            </span>
           </Link>
 
           {/* ====================================== */}
@@ -297,49 +138,9 @@ const Navbar = () => {
               <li key={link.path}>
                 <NavLink
                   to={link.path}
-                  className={({ isActive }) => `
-                    flex items-center justify-center
-
-                    gap-3
-
-                    min-w-[118px]
-
-                    h-[62px]
-
-                    px-4 py-4
-
-                    rounded-2xl
-
-                    text-[15px]
-                    2xl:text-[16px]
-
-                    font-extrabold
-
-                    text-center
-
-                    shadow-lg
-
-                    transition-all duration-300
-
-                    hover:scale-105
-
-                    ${link.bg}
-                    ${link.text}
-
-                    ${
-                      isActive
-                        ? "ring-4 ring-white shadow-2xl scale-105"
-                        : ""
-                    }
-                  `}
+              className={({ isActive }) => `flex min-h-10 items-center justify-center rounded-xl px-3.5 text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-purple-800 ${isActive ? "bg-brand-purple-50 text-brand-purple-900" : "text-slate-600 hover:bg-slate-50 hover:text-brand-purple-900"}`}
                 >
-                  <span className="text-xl flex items-center">
-                    {link.emoji}
-                  </span>
-
-                  <span className="leading-normal whitespace-nowrap">
-                    {link.label}
-                  </span>
+                  {link.label}
                 </NavLink>
               </li>
             ))}
@@ -352,7 +153,7 @@ const Navbar = () => {
           <div className="flex items-center gap-3">
             {/* CART */}
 
-            <Link to="/cart">
+            <Link to="/cart" aria-label={`Shopping cart, ${totalItems} items`}>
               <div className="relative">
                 <div
                   className="
@@ -401,7 +202,7 @@ const Navbar = () => {
                     border-2 border-white
                   "
                 >
-                  {cartItems.length}
+                  {totalItems}
                 </span>
               </div>
             </Link>
@@ -414,96 +215,31 @@ const Navbar = () => {
               <div className="hidden xl:flex items-center gap-3">
                 {/* ADMIN DASHBOARD (if admin) */}
                 {user?.isAdmin && (
-                  <Link to="/admin">
-                    <div
-                      className="
-                        flex items-center gap-2
-                        h-[62px]
-                        px-5
-                        rounded-2xl
-                        bg-gradient-to-r
-                        from-amber-500
-                        to-orange-600
-                        hover:from-amber-600
-                        hover:to-orange-700
-                        text-white
-                        font-black
-                        shadow-xl
-                        hover:scale-105
-                        transition duration-300
-                      "
-                    >
-                      <span className="text-xl">⚙️</span>
-                      Admin
-                    </div>
+                  <Link
+                    to="/admin"
+                    className="inline-flex h-11 items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 text-sm font-semibold text-amber-900 shadow-sm transition hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
+                  >
+                    <span aria-hidden="true">⚙️</span>
+                    Admin
                   </Link>
                 )}
                 {/* PROFILE */}
-                <Link to="/profile">
-                  <div
-                    className="
-                      flex items-center justify-center
-
-                      w-[62px] h-[62px]
-
-                      rounded-2xl
-
-                      bg-gradient-to-r
-                      from-emerald-400
-                      to-green-500
-
-                      text-white
-
-                      font-black text-2xl
-
-                      shadow-xl
-
-                      hover:scale-105
-
-                      transition duration-300
-                    "
-                  >
-                    {getInitials(user?.name)}
-                  </div>
+                <Link
+                  to="/profile"
+                  aria-label="Open your profile"
+                  className="flex h-11 w-11 items-center justify-center rounded-full border border-brand-purple-200 bg-brand-purple-50 text-sm font-bold text-brand-purple-800 shadow-sm transition hover:bg-brand-purple-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple-500 focus-visible:ring-offset-2"
+                >
+                  {getInitials(user?.name)}
                 </Link>
 
                 {/* LOGOUT */}
 
                 <button
-                  onClick={
-                    handleLogout
-                  }
-                  className="
-                    flex items-center justify-center gap-2
-
-                    h-[62px]
-
-                    px-5
-
-                    rounded-2xl
-
-                    bg-gradient-to-r
-                    from-red-500
-                    to-rose-500
-
-                    hover:from-red-600
-                    hover:to-rose-600
-
-                    text-white
-
-                    font-black
-
-                    shadow-xl
-
-                    hover:scale-105
-
-                    transition duration-300
-                  "
+                  type="button"
+                  onClick={handleLogout}
+                  className={logoutActionClass}
                 >
-                  <LogOut
-                    size={20}
-                  />
-
+                  <LogOut size={17} aria-hidden="true" />
                   Logout
                 </button>
               </div>
@@ -513,33 +249,9 @@ const Navbar = () => {
 
                 <Link
                   to="/login"
-                  className="
-                    flex items-center justify-center
-
-                    h-[62px]
-
-                    px-6
-
-                    rounded-2xl
-
-                    bg-gradient-to-r
-                    from-brand-purple-500
-                    to-brand-purple-400
-
-                    hover:from-brand-purple-600
-                    hover:to-brand-purple-500
-
-                    text-white
-
-                    font-black
-
-                    shadow-xl
-
-                    hover:scale-105
-
-                    transition duration-300
-                  "
+                  className={loginActionClass}
                 >
+                  <LogIn size={17} aria-hidden="true" />
                   Login
                 </Link>
               </div>
@@ -565,9 +277,11 @@ const Navbar = () => {
 
                 flex items-center justify-center
               "
-              onClick={() =>
-                setMenuOpen(!menuOpen)
-              }
+              type="button"
+              aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
+              aria-expanded={menuOpen}
+              aria-controls="site-navigation-mobile"
+              onClick={() => setMenuOpen(!menuOpen)}
             >
               {menuOpen ? (
                 <X
@@ -590,30 +304,27 @@ const Navbar = () => {
       {/* ====================================== */}
 
       <div
+        id="site-navigation-mobile"
+        aria-hidden={!menuOpen}
         className={`
           xl:hidden
 
           overflow-hidden
 
-          transition-all duration-500
+          transition-all duration-300
 
           ${
             menuOpen
-              ? "max-h-[900px]"
-              : "max-h-0"
+              ? "visible max-h-[900px]"
+              : "invisible max-h-0"
           }
         `}
       >
         <div
           className="
-            bg-gradient-to-b
-            from-brand-purple-50
-            via-brand-gold-50
-            to-brand-teal-50
+            bg-white
 
             px-6 py-8
-
-            rounded-b-[30px]
 
             border-t border-white/50
           "
@@ -635,7 +346,7 @@ const Navbar = () => {
                 text-brand-purple-500
               "
             >
-              Kids Menu
+              Navigation
             </div>
           </div>
 
@@ -649,37 +360,8 @@ const Navbar = () => {
                   onClick={() =>
                     setMenuOpen(false)
                   }
-                  className={({ isActive }) => `
-                    flex items-center justify-center gap-3
-
-                    px-6 py-4
-
-                    rounded-2xl
-
-                    text-lg
-
-                    font-black
-
-                    text-center
-
-                    shadow-lg
-
-                    transition duration-300
-
-                    ${link.bg}
-                    ${link.text}
-
-                    ${
-                      isActive
-                        ? "ring-4 ring-white"
-                        : ""
-                    }
-                  `}
+                  className={({ isActive }) => `flex items-center justify-center rounded-xl px-5 py-3.5 text-base font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-purple-800 ${isActive ? "bg-brand-purple-50 text-brand-purple-900" : "text-slate-700 hover:bg-slate-50 hover:text-brand-purple-900"}`}
                 >
-                  <span className="text-xl">
-                    {link.emoji}
-                  </span>
-
                   {link.label}
                 </NavLink>
               </li>
@@ -700,22 +382,9 @@ const Navbar = () => {
                     onClick={() =>
                       setMenuOpen(false)
                     }
-                    className="
-                      flex items-center justify-center gap-3
-                      px-6 py-4
-                      rounded-2xl
-                      bg-gradient-to-r
-                      from-amber-500
-                      to-orange-600
-                      hover:from-amber-600
-                      hover:to-orange-700
-                      text-white
-                      text-lg
-                      font-black
-                      shadow-xl
-                    "
+                    className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-6 py-3 text-base font-semibold text-amber-900 shadow-sm transition hover:bg-amber-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2"
                   >
-                    <span className="text-xl">⚙️</span>
+                    <span aria-hidden="true">⚙️</span>
                     Admin Dashboard
                   </Link>
                 )}
@@ -724,33 +393,16 @@ const Navbar = () => {
                   onClick={() =>
                     setMenuOpen(false)
                   }
-                  className="
-                    flex items-center justify-center gap-3
-
-                    px-6 py-4
-
-                    rounded-2xl
-
-                    bg-gradient-to-r
-                    from-emerald-400
-                    to-green-500
-
-                    text-white
-
-                    text-lg
-
-                    font-black
-
-                    shadow-xl
-                  "
+                  className="inline-flex min-h-12 w-full items-center justify-center gap-3 rounded-xl border border-brand-purple-200 bg-brand-purple-50 px-6 py-3 text-base font-semibold text-brand-purple-900 shadow-sm transition hover:bg-brand-purple-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-purple-500 focus-visible:ring-offset-2"
                 >
-                  <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-lg">
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-purple-200 text-sm font-bold text-brand-purple-900">
                     {getInitials(user?.name)}
-                  </div>
+                  </span>
                   Profile
                 </Link>
 
                 <button
+                  type="button"
                   onClick={() => {
                     handleLogout();
 
@@ -758,30 +410,9 @@ const Navbar = () => {
                       false
                     );
                   }}
-                  className="
-                    flex items-center justify-center gap-3
-
-                    px-6 py-4
-
-                    rounded-2xl
-
-                    bg-gradient-to-r
-                    from-red-500
-                    to-rose-500
-
-                    text-white
-
-                    text-lg
-
-                    font-black
-
-                    shadow-xl
-                  "
+                  className={mobileLogoutActionClass}
                 >
-                  <LogOut
-                    size={20}
-                  />
-
+                  <LogOut size={18} aria-hidden="true" />
                   Logout
                 </button>
               </>
@@ -792,26 +423,9 @@ const Navbar = () => {
                   onClick={() =>
                     setMenuOpen(false)
                   }
-                  className="
-                    flex items-center justify-center
-
-                    px-6 py-4
-
-                    rounded-2xl
-
-                    bg-gradient-to-r
-                    from-brand-purple-500
-                    to-brand-purple-400
-
-                    text-white
-
-                    text-lg
-
-                    font-black
-
-                    shadow-xl
-                  "
+                  className={mobileLoginActionClass}
                 >
+                  <LogIn size={18} aria-hidden="true" />
                   Login
                 </Link>
               </>

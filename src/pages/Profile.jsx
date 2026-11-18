@@ -27,6 +27,7 @@ import {
 
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import { toDisplayImageUrl } from "../utils/imageUrls";
 import { AuthContext } from "../context/authContextValue";
 import { validatePhone, cleanPhone } from "../utils/validators";
 import { orderAPI, wishlistAPI } from "../utils/api";
@@ -339,7 +340,7 @@ const Profile = () => {
                                 <div className="flex items-center gap-3">
                                   <div className="w-12 h-12 rounded-lg bg-white flex items-center justify-center overflow-hidden">
                                     {item.productImage ? (
-                                      <img src={item.productImage} alt={item.productTitle} className="w-full h-full object-cover" />
+                                      <img src={toDisplayImageUrl(item.productImage)} alt={item.productTitle} className="w-full h-full bg-[#f7f2e9] object-contain p-1" />
                                     ) : (
                                       <BookOpen size={20} className="text-brand-purple-400" />
                                     )}
@@ -391,7 +392,7 @@ const Profile = () => {
                       <div key={product.id} className="bg-white rounded-[20px] p-6 shadow-lg border border-gray-100 hover:shadow-xl transition duration-300">
                         <div className="w-full h-40 rounded-xl bg-brand-gold-50 flex items-center justify-center overflow-hidden mb-4">
                           {product.images && product.images[0] ? (
-                            <img src={product.images[0]} alt={product.title} className="w-full h-full object-contain" />
+                            <img src={toDisplayImageUrl(product.images[0])} alt={product.title} className="w-full h-full object-contain" />
                           ) : (
                             <BookOpen size={40} className="text-brand-gold-500" />
                           )}

@@ -1,7 +1,12 @@
 import axios from "axios";
 
-// const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
-const API_BASE_URL = import.meta.env.VITE_API_URL || "https://kuviyam-backend.onrender.com/api";
+const defaultApiUrl = import.meta.env.DEV
+  ? "http://localhost:5000/api"
+  : "https://kuviyam-backend.onrender.com/api";
+const configuredApiUrl = import.meta.env.DEV
+  ? import.meta.env.VITE_DEV_API_URL || import.meta.env.VITE_API_URL
+  : import.meta.env.VITE_API_URL;
+const API_BASE_URL = (configuredApiUrl || defaultApiUrl).replace(/\/$/, "");
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -89,12 +94,6 @@ export const galleryAPI = {
       onUploadProgress,
     }),
   deleteMedia: (id) => api.delete(`/gallery/${id}`),
-};
-
-// OTP APIs
-export const otpAPI = {
-  sendOTP: (data) => api.post("/otp/send", data),
-  verifyOTP: (data) => api.post("/otp/verify", data),
 };
 
 // Payment APIs
