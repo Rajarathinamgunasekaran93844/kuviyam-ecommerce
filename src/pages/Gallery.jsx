@@ -1,5 +1,6 @@
 import { useContext, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import * as UpChunk from "@mux/upchunk";
 import {
   ChevronLeft,
   ChevronRight,
@@ -54,6 +55,8 @@ const allowedFileTypes = new Set([
   "video/mp4",
   "video/webm",
 ]);
+const VIDEO_LIMIT = 2_000_000_000;
+const LEGACY_VIDEO_LIMIT = 50 * 1024 * 1024;
 
 const getErrorMessage = (error) =>
   error?.response?.data?.message || "Something went wrong. Please try again.";
@@ -65,6 +68,23 @@ const formatFileSize = (bytes) => {
     ? `${megabytes.toFixed(megabytes >= 10 ? 0 : 1)} MB`
     : `${Math.ceil(bytes / 1024)} KB`;
 };
+
+const uploadVideoToMux = (uploadUrl, file, onProgress) =>
+  new Promise((resolve, reject) => {
+    const upload = UpChunk.createUpload({
+      endpoint: uploadUrl,
+      file,
+      chunkSize: 30_720,
+    });
+    upload.on("progress", (event) => onProgress(event.detail));
+    upload.on("success", resolve);
+    upload.on("error", (event) => {
+      reject(new Error(event.detail?.message || "Mux could not receive the video."));
+    });
+  });
+
+const wait = (milliseconds) =>
+  new Promise((resolve) => window.setTimeout(resolve, milliseconds));
 
 const GallerySkeleton = () => (
   <div className="grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3">
@@ -83,6 +103,7 @@ const AdminUploadPanel = ({ onUploaded }) => {
   const [category, setCategory] = useState("Memories");
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [uploadStage, setUploadStage] = useState("Uploading");
 
   const chooseFile = (event) => {
     const selectedFile = event.target.files?.[0] || null;
@@ -101,13 +122,11 @@ const AdminUploadPanel = ({ onUploaded }) => {
 
     const limit = selectedFile.type.startsWith("image/")
       ? 10 * 1024 * 1024
-      : 50 * 1024 * 1024;
+      : VIDEO_LIMIT;
 
     if (selectedFile.size > limit) {
       toast.error(
-        `${selectedFile.type.startsWith("image/") ? "Images" : "Videos"} must be smaller than ${
-          limit / 1024 / 1024
-        } MB.`
+        `${selectedFile.type.startsWith("image/") ? "Images" : "Videos"} must be smaller than ${formatFileSize(limit)}.`
       );
       event.target.value = "";
       setFile(null);
@@ -135,26 +154,72 @@ const AdminUploadPanel = ({ onUploaded }) => {
     try {
       setUploading(true);
       setProgress(0);
+      setUploadStage("Uploading");
 
-      const response = await galleryAPI.uploadMedia(
-        file,
-        { title: title.trim(), category },
-        (progressEvent) => {
-          if (progressEvent.total) {
-            setProgress(
-              Math.round((progressEvent.loaded * 100) / progressEvent.total)
-            );
+      const metadata = { title: title.trim(), category };
+      let uploadedMedia;
+
+      if (file.type.startsWith("video/")) {
+        const setup = await galleryAPI.createVideoUpload(file, metadata);
+
+        if (setup.data.uploadStrategy === "MUX") {
+          const pendingMedia = setup.data.media;
+          try {
+            await uploadVideoToMux(setup.data.uploadUrl, file, setProgress);
+          } catch (error) {
+            await galleryAPI.deleteMedia(pendingMedia.id).catch(() => {});
+            throw error;
           }
-        }
-      );
 
-      onUploaded(response.data.media);
-      toast.success("Gallery media uploaded successfully.");
+          setProgress(100);
+          setUploadStage("Preparing video for streaming");
+          uploadedMedia = pendingMedia;
+
+          // Mux processes the video asynchronously. Poll briefly for the ready
+          // webhook result; the webhook still updates the gallery if processing
+          // takes longer than this upload screen remains open.
+          for (let attempt = 0; attempt < 18; attempt += 1) {
+            await wait(4000);
+            try {
+              const status = await galleryAPI.getMediaStatus(pendingMedia.id);
+              uploadedMedia = status.data.media;
+              if (["READY", "ERRORED"].includes(uploadedMedia.assetStatus)) break;
+            } catch {
+              break;
+            }
+          }
+        } else {
+          if (file.size > LEGACY_VIDEO_LIMIT) {
+            throw new Error("Mux is not configured for this API yet. Local video uploads are limited to 50 MB.");
+          }
+          const response = await galleryAPI.uploadMedia(file, metadata, (event) => {
+            if (event.total) setProgress(Math.round((event.loaded / event.total) * 100));
+          });
+          uploadedMedia = response.data.media;
+        }
+      } else {
+        const response = await galleryAPI.uploadMedia(file, metadata, (event) => {
+          if (event.total) setProgress(Math.round((event.loaded / event.total) * 100));
+        });
+        uploadedMedia = response.data.media;
+      }
+
+      onUploaded(uploadedMedia);
+      toast.success(
+        uploadedMedia.assetStatus === "READY"
+          ? "Gallery media uploaded and ready to play."
+          : uploadedMedia.mediaType === "VIDEO" && uploadedMedia.storageProvider === "MUX"
+            ? uploadedMedia.assetStatus === "ERRORED"
+              ? "Mux could not process the video. You can remove it and try another file."
+              : "Video uploaded. Mux is preparing it for streaming."
+            : "Gallery media uploaded successfully."
+      );
       form.reset();
       setFile(null);
       setTitle("");
       setCategory("Memories");
       setProgress(0);
+      setUploadStage("Uploading");
     } catch (error) {
       toast.error(getErrorMessage(error));
     } finally {
@@ -179,7 +244,7 @@ const AdminUploadPanel = ({ onUploaded }) => {
             Upload gallery media
           </h2>
           <p className="mt-1 text-gray-600">
-            Add an image up to 10 MB or an MP4/WebM video up to 50 MB.
+            Add an image up to 10 MB or an MP4/WebM video up to 2 GB. Video uploads go directly to Mux when configured.
           </p>
         </div>
         <div className="rounded-2xl bg-brand-teal-50 p-3 text-brand-teal-700">
@@ -243,7 +308,7 @@ const AdminUploadPanel = ({ onUploaded }) => {
         {uploading && (
           <div className="md:col-span-2" aria-live="polite">
             <div className="mb-2 flex justify-between text-sm font-black text-brand-purple-700">
-              <span>Uploading</span>
+              <span>{uploadStage}</span>
               <span>{progress}%</span>
             </div>
             <div className="h-3 overflow-hidden rounded-full bg-brand-purple-100">
@@ -289,13 +354,26 @@ const GalleryCard = ({ item, index, isAdmin, deleting, onOpen, onDelete }) => (
     >
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-[#f6f2eb] p-3 sm:p-4">
         {item.mediaType === "VIDEO" ? (
-          <video
-            src={item.url}
-            muted
-            playsInline
-            preload="metadata"
-            className="h-full w-full rounded-2xl bg-slate-900 object-contain"
-          />
+          item.thumbnailUrl ? (
+            <img
+              src={item.thumbnailUrl}
+              alt={item.title}
+              loading="lazy"
+              className="h-full w-full rounded-2xl object-contain"
+            />
+          ) : item.storageProvider === "MUX" ? (
+            <div className="flex h-full w-full items-center justify-center rounded-2xl bg-slate-900 px-4 text-center text-sm font-bold text-white">
+              {item.assetStatus === "ERRORED" ? "Video processing failed" : "Preparing video…"}
+            </div>
+          ) : (
+            <video
+              src={item.url}
+              muted
+              playsInline
+              preload="metadata"
+              className="h-full w-full rounded-2xl bg-slate-900 object-contain"
+            />
+          )
         ) : (
           <img
             src={item.url}
@@ -309,7 +387,7 @@ const GalleryCard = ({ item, index, isAdmin, deleting, onOpen, onDelete }) => (
           {item.category || "Memories"}
         </div>
 
-        {item.mediaType === "VIDEO" && (
+        {item.mediaType === "VIDEO" && item.assetStatus !== "ERRORED" && (
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
             <span className="flex h-14 w-14 items-center justify-center rounded-full bg-white/95 text-brand-purple-600 shadow-xl transition group-hover:scale-110 sm:h-16 sm:w-16">
               <Play size={26} fill="currentColor" />
@@ -690,13 +768,29 @@ const Gallery = () => {
               className="flex max-h-[88vh] max-w-[88vw] flex-col items-center"
             >
               {selectedMedia.mediaType === "VIDEO" ? (
-                <video
-                  src={selectedMedia.url}
-                  controls
-                  autoPlay
-                  playsInline
-                  className="max-h-[76vh] max-w-full rounded-2xl bg-black shadow-2xl"
-                />
+                selectedMedia.playbackId ? (
+                  <iframe
+                    src={`https://player.mux.com/${encodeURIComponent(selectedMedia.playbackId)}`}
+                    title={selectedMedia.title}
+                    allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
+                    allowFullScreen
+                    className="aspect-video w-[min(82vw,1100px)] rounded-2xl border-0 bg-black shadow-2xl"
+                  />
+                ) : selectedMedia.storageProvider === "MUX" ? (
+                  <div className="flex aspect-video w-[min(82vw,1100px)] items-center justify-center rounded-2xl bg-slate-950 px-6 text-center text-white shadow-2xl">
+                    {selectedMedia.assetStatus === "ERRORED"
+                      ? "This video could not be prepared. Remove it and upload another file."
+                      : "Mux is preparing this video for streaming. Please check again shortly."}
+                  </div>
+                ) : (
+                  <video
+                    src={selectedMedia.url}
+                    controls
+                    autoPlay
+                    playsInline
+                    className="max-h-[76vh] max-w-full rounded-2xl bg-black shadow-2xl"
+                  />
+                )
               ) : (
                 <img
                   src={selectedMedia.url}

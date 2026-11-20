@@ -81,6 +81,15 @@ export const blogAPI = {
 // Gallery APIs
 export const galleryAPI = {
   getMedia: () => api.get("/gallery"),
+  createVideoUpload: (file, metadata) =>
+    api.post("/gallery/video-upload", {
+      fileName: file.name,
+      mimeType: file.type,
+      size: file.size,
+      title: metadata.title,
+      category: metadata.category,
+    }),
+  getMediaStatus: (id) => api.get(`/gallery/${id}/status`),
   uploadMedia: (file, metadata, onUploadProgress) =>
     api.post("/gallery", file, {
       params: {
